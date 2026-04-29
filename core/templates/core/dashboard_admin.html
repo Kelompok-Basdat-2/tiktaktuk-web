@@ -1,0 +1,276 @@
+{% extends 'core/base.html' %}
+
+{% block body %}
+<div class="layout">
+    {% include 'core/_sidebar.html' with role='admin' active='dashboard' user_name='Reva Admin' user_role='Administrator' %}
+    <main class="main-content">
+        <header class="header">
+            <div class="header-left">
+                <h1 class="header-title">Admin Dashboard</h1>
+                <p class="header-subtitle">Kelola sistem dan semua data</p>
+            </div>
+            <div class="header-right">
+                <input type="text" class="form-input" placeholder="Search..." style="width: 280px; padding-left: 2.5rem;">
+            </div>
+        </header>
+        <div class="page-content">
+            <div class="bento-grid">
+                <div class="bento-card stat-card">
+                    <span class="stat-label">Total Venue</span>
+                    <span class="stat-value">24</span>
+                    <span class="stat-change positive">+3 this month</span>
+                </div>
+                <div class="bento-card stat-card">
+                    <span class="stat-label">Total Event</span>
+                    <span class="stat-value">156</span>
+                    <span class="stat-change positive">+12 this month</span>
+                </div>
+                <div class="bento-card stat-card">
+                    <span class="stat-label">Total User</span>
+                    <span class="stat-value">1,243</span>
+                    <span class="stat-change positive">+89 this month</span>
+                </div>
+                <div class="bento-card stat-card">
+                    <span class="stat-label">Total Order</span>
+                    <span class="stat-value">3,891</span>
+                    <span class="stat-change positive">+234 this week</span>
+                </div>
+                <div class="bento-card stat-card">
+                    <span class="stat-label">Revenue</span>
+                    <span class="stat-value">$124K</span>
+                    <span class="stat-change positive">+18% this month</span>
+                </div>
+                <div class="bento-card stat-card">
+                    <span class="stat-label">Active Promo</span>
+                    <span class="stat-value">8</span>
+                    <span class="stat-change positive">+2 this week</span>
+                </div>
+                <div class="bento-card stat-card">
+                    <span class="stat-label">Artists</span>
+                    <span class="stat-value">47</span>
+                    <span class="stat-change positive">+5 this month</span>
+                </div>
+                <div class="bento-card stat-card">
+                    <span class="stat-label">Pending Orders</span>
+                    <span class="stat-value">23</span>
+                    <span class="stat-change">Needs attention</span>
+                </div>
+            </div>
+            <div class="grid grid-cols-3" style="gap: 24px;">
+                <div class="card" style="grid-column: span 2;">
+                    <div class="card-header">
+                        <h2 class="card-title">Recent Activities</h2>
+                        <button class="btn btn-primary">View All</button>
+                    </div>
+                    <div class="list-item">
+                        <div>
+                            <p class="item-title">New venue added: Bandung Convention Hall</p>
+                            <span class="badge badge-primary">Admin</span>
+                        </div>
+                        <span class="badge">Just now</span>
+                    </div>
+                    <div class="list-item">
+                        <div>
+                            <p class="item-title">Order #ORD-2026-0001 confirmed</p>
+                            <span class="badge badge-primary">Customer</span>
+                        </div>
+                        <span class="badge">5 min ago</span>
+                    </div>
+                    <div class="list-item">
+                        <div>
+                            <p class="item-title">New event created: Tech Conference 2026</p>
+                            <span class="badge badge-primary">Organizer</span>
+                        </div>
+                        <span class="badge">1 hour ago</span>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Quick Actions</h2>
+                    </div>
+                    <div class="action-list">
+                        <button class="btn btn-secondary">Add Venue</button>
+                        <button class="btn btn-secondary">Create Event</button>
+                        <button class="btn btn-secondary">Manage Users</button>
+                        <button class="btn btn-secondary">View Reports</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+{% endblock %}
+
+{% block style %}
+        .header-subtitle {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .page-content {
+            padding: 32px;
+        }
+
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .bento-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+        }
+
+        .stat-card {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .stat-change {
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .stat-change.positive {
+            color: var(--success);
+        }
+
+        .grid {
+            display: grid;
+            gap: 24px;
+        }
+
+        .grid-cols-3 {
+            grid-template-columns: repeat(3, 1fr);
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+            box-shadow: var(--shadow);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .list-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .list-item:last-child {
+            border-bottom: none;
+        }
+
+        .item-title {
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 12px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .badge-primary {
+            background: var(--primary-light);
+            color: var(--primary);
+        }
+
+        .action-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 20px;
+            border-radius: var(--radius);
+            font-weight: 500;
+            font-size: 0.875rem;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background: var(--background);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+            width: 100%;
+            justify-content: flex-start;
+        }
+
+        .btn-secondary:hover {
+            background: var(--border);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            font-size: 0.875rem;
+            font-family: inherit;
+            background: var(--surface);
+            transition: border-color 0.2s, box-shadow 0.2s;
+            position: relative;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(255, 107, 74, 0.15);
+        }
+{% endblock %}

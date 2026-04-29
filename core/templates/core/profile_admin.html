@@ -1,0 +1,159 @@
+{% extends 'core/base.html' %}
+
+{% block body %}
+<div class="layout">
+    {% include 'core/_sidebar.html' with role='admin' active='profile' user_name='Reva Admin' user_role='Administrator' %}
+    <main class="main-content">
+        <header class="header">
+            <div class="header-left">
+                <h1 class="header-title">Profil Saya</h1>
+                <p class="header-subtitle">Kelola informasi akun administrator</p>
+            </div>
+        </header>
+        <div class="page-content">
+            <div class="profile-card">
+                <div class="profile-header">
+                    <div class="profile-avatar">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                            <path d="M2 17l10 5 10-5"/>
+                            <path d="M2 12l10 5 10-5"/>
+                        </svg>
+                    </div>
+                    <div class="profile-header-info">
+                        <h2 class="profile-name">Reva Admin</h2>
+                        <span class="profile-badge">Administrator</span>
+                    </div>
+                </div>
+
+                <div class="profile-info-grid">
+                    <div class="profile-field">
+                        <label class="profile-label">Username</label>
+                        <span class="profile-value">admin_reva</span>
+                    </div>
+                    <div class="profile-field">
+                        <label class="profile-label">Nama Lengkap</label>
+                        <span class="profile-value" id="display-fullname">Reva Admin</span>
+                    </div>
+                    <div class="profile-field">
+                        <label class="profile-label">Email</label>
+                        <span class="profile-value">reva.admin@tiktaktuk.com</span>
+                    </div>
+                </div>
+
+                <div class="profile-actions">
+                    <button class="btn btn-primary" onclick="showEditForm()">Edit Profil</button>
+                    <button class="btn btn-secondary" onclick="showPasswordModal()">Update Password</button>
+                </div>
+            </div>
+
+            <!-- Edit Form (hidden by default) -->
+            <div id="edit-form" class="profile-card" style="display:none;">
+                <div class="profile-header">
+                    <h2 class="profile-name">Edit Profil</h2>
+                </div>
+                <form onsubmit="saveProfile(event)">
+                    <div class="form-group">
+                        <label class="form-label">Username</label>
+                        <input type="text" class="form-input" value="admin_reva" disabled>
+                        <span class="form-hint">Username tidak dapat diubah</span>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label required">Nama Lengkap</label>
+                        <input type="text" class="form-input" id="edit-fullname" value="Reva Admin" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-input" value="reva.admin@tiktaktuk.com" disabled>
+                        <span class="form-hint">Email tidak dapat diubah</span>
+                    </div>
+                    <div class="profile-actions">
+                        <button type="submit" class="btn btn-primary">Simpan</button>
+                        <button type="button" class="btn btn-secondary" onclick="hideEditForm()">Batal</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <!-- Update Password Modal -->
+    <div id="password-modal" class="modal" style="display:none;">
+        <div class="modal-overlay" onclick="hidePasswordModal()"></div>
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2 class="modal-title">Update Password</h2>
+                <button class="modal-close" onclick="hidePasswordModal()">&times;</button>
+            </div>
+            <form onsubmit="updatePassword(event)">
+                <div class="form-group">
+                    <label class="form-label required">Password Lama</label>
+                    <input type="password" class="form-input" id="old-password" placeholder="Masukkan password lama" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label required">Password Baru</label>
+                    <input type="password" class="form-input" id="new-password" placeholder="Min. 8 karakter" required minlength="8">
+                </div>
+                <div class="form-group">
+                    <label class="form-label required">Konfirmasi Password Baru</label>
+                    <input type="password" class="form-input" id="confirm-password" placeholder="Ulangi password baru" required>
+                </div>
+                <div id="password-error" class="alert alert-error" style="display:none;"></div>
+                <div class="modal-actions">
+                    <button type="submit" class="btn btn-primary">Simpan Password</button>
+                    <button type="button" class="btn btn-secondary" onclick="hidePasswordModal()">Batal</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function showEditForm() {
+    document.getElementById('edit-form').style.display = 'block';
+    document.querySelector('.profile-card').style.display = 'none';
+}
+function hideEditForm() {
+    document.getElementById('edit-form').style.display = 'none';
+    document.querySelector('.profile-card').style.display = 'block';
+}
+function saveProfile(e) {
+    e.preventDefault();
+    document.getElementById('display-fullname').textContent = document.getElementById('edit-fullname').value;
+    hideEditForm();
+}
+function showPasswordModal() {
+    document.getElementById('password-modal').style.display = 'flex';
+    document.getElementById('password-error').style.display = 'none';
+}
+function hidePasswordModal() {
+    document.getElementById('password-modal').style.display = 'none';
+    document.getElementById('old-password').value = '';
+    document.getElementById('new-password').value = '';
+    document.getElementById('confirm-password').value = '';
+}
+function updatePassword(e) {
+    e.preventDefault();
+    const np = document.getElementById('new-password').value;
+    const cp = document.getElementById('confirm-password').value;
+    const err = document.getElementById('password-error');
+    if (np !== cp) {
+        err.textContent = 'Password baru dan konfirmasi tidak cocok.';
+        err.style.display = 'block';
+        return;
+    }
+    if (np.length < 8) {
+        err.textContent = 'Password minimal 8 karakter.';
+        err.style.display = 'block';
+        return;
+    }
+    alert('Password berhasil diperbarui!');
+    hidePasswordModal();
+}
+</script>
+{% endblock %}
+
+{% block style %}
+        .profile-avatar { background: var(--primary-light); color: var(--primary); }
+{% endblock %}

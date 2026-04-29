@@ -5,6 +5,8 @@ Django 6.0.4 — Python venv
 
 **Database:** Raw SQL only. NO Django ORM. All queries in `queries.sql`.
 
+**Models:** DO NOT use Django models.py. All data operations via raw SQL only.
+
 ---
 
 ## Aesthetic

@@ -1,0 +1,430 @@
+{% extends 'core/base.html' %}
+
+{% block body %}
+<div class="layout">
+    {% include 'core/_sidebar.html' with role='customer' active='dashboard' user_name='Reviewer Satu' user_role='Customer' %}
+    <main class="main-content">
+        <header class="header">
+            <div class="header-left">
+                <h1 class="header-title">Customer Dashboard</h1>
+                <p class="header-subtitle">Browse events and manage your tickets</p>
+            </div>
+            <div class="header-right">
+                <input type="text" class="form-input" placeholder="Search events..." style="width: 280px; padding-left: 2.5rem;">
+            </div>
+        </header>
+        <div class="page-content">
+            <div class="bento-grid">
+                <div class="bento-card stat-card">
+                    <span class="stat-label">My Tickets</span>
+                    <span class="stat-value">5</span>
+                    <span class="stat-change positive">2 upcoming</span>
+                </div>
+                <div class="bento-card stat-card">
+                    <span class="stat-label">My Orders</span>
+                    <span class="stat-value">3</span>
+                    <span class="stat-change positive">1 pending</span>
+                </div>
+                <div class="bento-card stat-card">
+                    <span class="stat-label">Favorite Events</span>
+                    <span class="stat-value">12</span>
+                    <span class="stat-change positive">+3 this month</span>
+                </div>
+                <div class="bento-card stat-card">
+                    <span class="stat-label">Total Spent</span>
+                    <span class="stat-value">$2.4K</span>
+                    <span class="stat-change positive">All time</span>
+                </div>
+                <div class="bento-card stat-card">
+                    <span class="stat-label">Available Promos</span>
+                    <span class="stat-value">8</span>
+                    <span class="stat-change positive">Save up to 30%</span>
+                </div>
+                <div class="bento-card stat-card">
+                    <span class="stat-label">Upcoming Events</span>
+                    <span class="stat-value">4</span>
+                    <span class="stat-change positive">This month</span>
+                </div>
+                <div class="bento-card stat-card">
+                    <span class="stat-label">Venues Visited</span>
+                    <span class="stat-value">7</span>
+                    <span class="stat-change positive">+2 new</span>
+                </div>
+                <div class="bento-card stat-card">
+                    <span class="stat-label">Artists Followed</span>
+                    <span class="stat-value">15</span>
+                    <span class="stat-change positive">+2 this month</span>
+                </div>
+            </div>
+            <div class="grid grid-cols-3" style="gap: 24px;">
+                <div class="card" style="grid-column: span 2;">
+                    <div class="card-header">
+                        <h2 class="card-title">Upcoming Events</h2>
+                        <button class="btn btn-primary">Browse Events</button>
+                    </div>
+                    <div class="list-item">
+                        <div>
+                            <p class="item-title">Summer Music Festival 2026</p>
+                            <span class="badge badge-primary">On Sale</span>
+                        </div>
+                        <span class="badge">VIP Available</span>
+                    </div>
+                    <div class="list-item">
+                        <div>
+                            <p class="item-title">Tech Conference Indonesia</p>
+                            <span class="badge badge-primary">On Sale</span>
+                        </div>
+                        <span class="badge">Early Bird</span>
+                    </div>
+                    <div class="list-item">
+                        <div>
+                            <p class="item-title">Comedy Night Special</p>
+                            <span class="badge">Coming Soon</span>
+                        </div>
+                        <span class="badge">Standard</span>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Quick Actions</h2>
+                    </div>
+                    <div class="action-list">
+                        <button class="btn btn-secondary">Browse Events</button>
+                        <button class="btn btn-secondary">View My Tickets</button>
+                        <button class="btn btn-secondary">My Orders</button>
+                        <button class="btn btn-secondary">Apply Promo</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+{% endblock %}
+
+{% block style %}
+        .layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 260px;
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            z-index: 100;
+            padding: 16px 0;
+        }
+
+        .sidebar-brand {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: var(--primary);
+            text-decoration: none;
+            padding: 0 20px 16px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 16px;
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .sidebar-item {
+            display: block;
+            padding: 10px 20px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+
+        .sidebar-item:hover {
+            background: var(--background);
+            color: var(--text-primary);
+        }
+
+        .sidebar-item.active {
+            background: var(--primary-light);
+            color: var(--primary);
+            border-left-color: var(--primary);
+        }
+
+        .sidebar-footer {
+            border-top: 1px solid var(--border);
+            padding-top: 16px;
+            margin-top: auto;
+        }
+
+        .user-info {
+            padding: 0 20px 8px;
+        }
+
+        .user-name {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .user-role {
+            display: block;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .role-switcher {
+            padding: 0 20px 16px;
+        }
+
+        .role-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .role-buttons {
+            display: flex;
+            gap: 4px;
+        }
+
+        .role-btn {
+            flex: 1;
+            padding: 6px 8px;
+            text-align: center;
+            background: var(--background);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .role-btn:hover {
+            background: var(--border);
+            color: var(--text-primary);
+        }
+
+        .role-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .main-content {
+            flex: 1;
+            margin-left: 260px;
+            min-height: 100vh;
+        }
+
+        .header {
+            height: var(--header-height);
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 32px;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .header-left {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+        }
+
+        .header-subtitle {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .page-content {
+            padding: 32px;
+        }
+
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .bento-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+        }
+
+        .stat-card {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .stat-change {
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .stat-change.positive {
+            color: var(--success);
+        }
+
+        .grid {
+            display: grid;
+            gap: 24px;
+        }
+
+        .grid-cols-3 {
+            grid-template-columns: repeat(3, 1fr);
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+            box-shadow: var(--shadow);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .list-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .list-item:last-child {
+            border-bottom: none;
+        }
+
+        .item-title {
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 12px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .badge-primary {
+            background: var(--primary-light);
+            color: var(--primary);
+        }
+
+        .action-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 20px;
+            border-radius: var(--radius);
+            font-weight: 500;
+            font-size: 0.875rem;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background: var(--background);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+            width: 100%;
+            justify-content: flex-start;
+        }
+
+        .btn-secondary:hover {
+            background: var(--border);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            font-size: 0.875rem;
+            font-family: inherit;
+            background: var(--surface);
+            transition: border-color 0.2s, box-shadow 0.2s;
+            position: relative;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(255, 107, 74, 0.15);
+        }
+{% endblock %}

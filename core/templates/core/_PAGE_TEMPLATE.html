@@ -1,0 +1,76 @@
+{% extends 'core/base.html' %}
+
+{% block body %}
+<div class="layout">
+    <aside class="sidebar">
+        <a href="/" class="sidebar-brand">
+            <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                <circle cx="16" cy="16" r="14" fill="#FF6B4A"/>
+                <circle cx="16" cy="16" r="8" fill="white"/>
+                <circle cx="16" cy="16" r="4" fill="#FF6B4A"/>
+            </svg>
+            TikTakTuk
+        </a>
+        <nav class="sidebar-nav">
+            <a href="/dashboard/YOUR_ROLE/" class="sidebar-item active">Dashboard</a>
+            <!-- Add your navigation links here -->
+            <a href="#" class="sidebar-item">Your Link 1</a>
+            <a href="#" class="sidebar-item">Your Link 2</a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="user-info">
+                <span class="user-name">Your Name</span>
+                <span class="user-role">Your Role</span>
+            </div>
+            <div class="role-switcher">
+                <span class="role-label">Role:</span>
+                <div class="role-buttons">
+                    <a href="/dashboard/admin/" class="role-btn">Admin</a>
+                    <a href="/dashboard/organizer/" class="role-btn">Org</a>
+                    <a href="/dashboard/customer/" class="role-btn">Cust</a>
+                </div>
+            </div>
+            <a href="/login/" class="sidebar-item">Logout</a>
+        </div>
+    </aside>
+    <main class="main-content">
+        <header class="header">
+            <div class="header-left">
+                <h1 class="header-title">Your Page Title</h1>
+                <p class="header-subtitle">Your page subtitle</p>
+            </div>
+            <div class="header-right">
+                <input type="text" class="form-input" placeholder="Search..." style="width: 280px; padding-left: 2.5rem;">
+            </div>
+        </header>
+        <div class="page-content">
+            <!-- ===== YOUR CONTENT HERE ===== -->
+            <p>Replace this with your page content.</p>
+            <!-- ============================ -->
+
+            <div class="grid grid-cols-3" style="gap: 24px; margin-top: 24px;">
+                <div class="card" style="grid-column: span 2;">
+                    <div class="card-header">
+                        <h2 class="card-title">Your Card Title</h2>
+                    </div>
+                    <!-- Your list items here -->
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Quick Actions</h2>
+                    </div>
+                    <div class="action-list">
+                        <button class="btn btn-secondary">Action 1</button>
+                        <button class="btn btn-secondary">Action 2</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+{% endblock %}
+
+{% block style %}
+        /* ===== YOUR CUSTOM STYLES HERE ===== */
+        /* ================================== */
+{% endblock %}

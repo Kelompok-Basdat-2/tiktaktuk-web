@@ -3,7 +3,7 @@
 {% block style %}
         .auth-container {
             width: 100%;
-            max-width: 480px;
+            max-width: 520px;
             padding: 24px;
         }
 
@@ -41,6 +41,87 @@
             margin-bottom: 24px;
         }
 
+        /* Role Selector */
+        .role-selector {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .role-option {
+            position: relative;
+        }
+
+        .role-option input {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .role-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            padding: 16px 12px;
+            border: 2px solid var(--border);
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .role-card:hover {
+            border-color: var(--primary);
+            background: var(--primary-light);
+        }
+
+        .role-option input:checked + .role-card {
+            border-color: var(--primary);
+            background: var(--primary-light);
+            box-shadow: 0 0 0 3px rgba(255, 107, 74, 0.15);
+        }
+
+        .role-option input:checked + .role-card {
+            border-color: var(--primary);
+            background: var(--primary-light);
+        }
+
+        .role-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        .role-icon.admin { background: #FEE2E2; color: #DC2626; }
+        .role-icon.organizer { background: #DBEAFE; color: #2563EB; }
+        .role-icon.customer { background: #D1FAE5; color: #059669; }
+
+        .role-name {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .role-desc {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+        }
+
+        /* Form sections */
+        .form-section {
+            display: none;
+        }
+
+        .form-section.active {
+            display: block;
+        }
+
         .form-row {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -56,6 +137,11 @@
             margin-bottom: 6px;
             font-weight: 500;
             font-size: 0.875rem;
+        }
+
+        .form-label.required::after {
+            content: ' *';
+            color: var(--error);
         }
 
         .form-input, .form-select {
@@ -99,6 +185,12 @@
             border: 1px solid #FECACA;
         }
 
+        .alert-success {
+            background: #D1FAE5;
+            color: #065F46;
+            border: 1px solid #A7F3D0;
+        }
+
         .btn {
             display: inline-flex;
             align-items: center;
@@ -124,6 +216,16 @@
             background: var(--primary-dark);
         }
 
+        .btn-secondary {
+            background: var(--background);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border);
+        }
+
         .auth-footer {
             text-align: center;
             margin-top: 24px;
@@ -136,8 +238,33 @@
             font-weight: 500;
         }
 
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            cursor: pointer;
+            margin-bottom: 16px;
+            background: none;
+            border: none;
+            font-family: inherit;
+            padding: 0;
+        }
+
+        .back-btn:hover {
+            color: var(--primary);
+        }
+
+        .divider {
+            height: 1px;
+            background: var(--border);
+            margin: 20px 0;
+        }
+
         @media (max-width: 480px) {
             .form-row { grid-template-columns: 1fr; }
+            .role-selector { grid-template-columns: 1fr; }
         }
 {% endblock %}
 
@@ -150,11 +277,11 @@
                     <circle cx="16" cy="16" r="8" fill="white"/>
                     <circle cx="16" cy="16" r="4" fill="#FF6B4A"/>
                 </svg>
-                TikTa Tuk
+                TikTakTuk
             </a>
 
             <h1 class="auth-title">Buat Akun Baru</h1>
-            <p class="auth-subtitle">Daftar untuk mulai menggunakan layanan kami</p>
+            <p class="auth-subtitle">Pilih peran dan isi data diri Anda</p>
 
             {% if messages %}
                 {% for message in messages %}
@@ -164,29 +291,204 @@
                 {% endfor %}
             {% endif %}
 
-            <form method="post" novalidate>
-                {% csrf_token %}
-                {% for field in form %}
-                    <div class="form-group">
-                        <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
-                        {{ field }}
-                        {% if field.errors %}
-                            {% for error in field.errors %}
-                                <div class="form-error">{{ error }}</div>
-                            {% endfor %}
-                        {% else %}
-                            {% if field.help_text %}
-                                <div class="form-hint">{{ field.help_text }}</div>
-                            {% endif %}
-                        {% endif %}
+            <!-- Step 1: Role Selection -->
+            <div id="step-role" class="form-section active">
+                <div class="role-selector">
+                    <label class="role-option" onclick="showForm('admin')">
+                        <input type="radio" name="role" value="admin">
+                        <div class="role-card">
+                            <div class="role-icon admin">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                                    <path d="M2 17l10 5 10-5"/>
+                                    <path d="M2 12l10 5 10-5"/>
+                                </svg>
+                            </div>
+                            <span class="role-name">Admin</span>
+                            <span class="role-desc">Kelola sistem</span>
+                        </div>
+                    </label>
+                    <label class="role-option" onclick="showForm('organizer')">
+                        <input type="radio" name="role" value="organizer">
+                        <div class="role-card">
+                            <div class="role-icon organizer">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="3" y="4" width="18" height="18" rx="2"/>
+                                    <line x1="16" y1="2" x2="16" y2="6"/>
+                                    <line x1="8" y1="2" x2="8" y2="6"/>
+                                    <line x1="3" y1="10" x2="21" y2="10"/>
+                                </svg>
+                            </div>
+                            <span class="role-name">Organizer</span>
+                            <span class="role-desc">Buat & kelola event</span>
+                        </div>
+                    </label>
+                    <label class="role-option" onclick="showForm('customer')">
+                        <input type="radio" name="role" value="customer">
+                        <div class="role-card">
+                            <div class="role-icon customer">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                    <circle cx="12" cy="7" r="4"/>
+                                </svg>
+                            </div>
+                            <span class="role-name">Customer</span>
+                            <span class="role-desc">Beli tiket event</span>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Step 2: Registration Forms -->
+            <div id="step-form" class="form-section">
+                <button type="button" class="back-btn" onclick="showRoleSelection()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 12H5M12 19l-7-7 7-7"/>
+                    </svg>
+                    Kembali
+                </button>
+                <h1 id="form-title" class="auth-title" style="text-align:left;margin-bottom:16px;"></h1>
+
+                <form method="post" id="register-form" novalidate>
+                    {% csrf_token %}
+                    <input type="hidden" name="role" id="selected-role">
+
+                    <!-- Admin Form -->
+                    <div id="form-admin" class="role-form" style="display:none;">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label required" for="admin_username">Username</label>
+                                <input type="text" class="form-input" id="admin_username" name="username" placeholder="username" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label required" for="admin_password">Password</label>
+                                <input type="password" class="form-input" id="admin_password" name="password" placeholder="Min. 8 karakter" required minlength="8">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label required" for="admin_password2">Konfirmasi Password</label>
+                                <input type="password" class="form-input" id="admin_password2" name="password2" placeholder="Ulangi password" required>
+                            </div>
+                        </div>
                     </div>
-                {% endfor %}
-                <button type="submit" class="btn btn-primary">Daftar</button>
-            </form>
+
+                    <!-- Organizer Form -->
+                    <div id="form-organizer" class="role-form" style="display:none;">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label required" for="org_username">Username</label>
+                                <input type="text" class="form-input" id="org_username" name="username" placeholder="username" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label required" for="org_password">Password</label>
+                                <input type="password" class="form-input" id="org_password" name="password" placeholder="Min. 8 karakter" required minlength="8">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label required" for="org_password2">Konfirmasi Password</label>
+                            <input type="password" class="form-input" id="org_password2" name="password2" placeholder="Ulangi password" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label required" for="org_fullname">Nama Lengkap</label>
+                            <input type="text" class="form-input" id="org_fullname" name="fullname" placeholder="Nama lengkap Anda" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label required" for="org_email">Email</label>
+                            <input type="email" class="form-input" id="org_email" name="email" placeholder="email@domain.com" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label required" for="org_phone">Nomor Telepon</label>
+                            <input type="tel" class="form-input" id="org_phone" name="phone" placeholder="08xxxxxxxxxx" required>
+                        </div>
+                    </div>
+
+                    <!-- Customer Form -->
+                    <div id="form-customer" class="role-form" style="display:none;">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label required" for="cust_username">Username</label>
+                                <input type="text" class="form-input" id="cust_username" name="username" placeholder="username" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label required" for="cust_password">Password</label>
+                                <input type="password" class="form-input" id="cust_password" name="password" placeholder="Min. 8 karakter" required minlength="8">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label required" for="cust_password2">Konfirmasi Password</label>
+                            <input type="password" class="form-input" id="cust_password2" name="password2" placeholder="Ulangi password" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label required" for="cust_fullname">Nama Lengkap</label>
+                            <input type="text" class="form-input" id="cust_fullname" name="fullname" placeholder="Nama lengkap Anda" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label required" for="cust_email">Email</label>
+                            <input type="email" class="form-input" id="cust_email" name="email" placeholder="email@domain.com" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label required" for="cust_phone">Nomor Telepon</label>
+                            <input type="tel" class="form-input" id="cust_phone" name="phone" placeholder="08xxxxxxxxxx" required>
+                        </div>
+                    </div>
+
+                    <div class="divider"></div>
+                    <button type="submit" class="btn btn-primary">Daftar</button>
+                </form>
+            </div>
 
             <div class="auth-footer">
                 Sudah punya akun? <a href="/login/">Masuk di sini</a>
             </div>
         </div>
     </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function showForm(role) {
+    document.getElementById('step-role').classList.remove('active');
+    document.getElementById('step-form').classList.add('active');
+    document.getElementById('selected-role').value = role;
+
+    // Explicitly check the radio button for this role
+    const radio = document.querySelector('input[name="role"][value="' + role + '"]');
+    if (radio) radio.checked = true;
+
+    // Hide all forms
+    document.querySelectorAll('.role-form').forEach(f => f.style.display = 'none');
+
+    // Show selected form
+    const titles = {
+        'admin': 'Registrasi Admin',
+        'organizer': 'Registrasi Organizer',
+        'customer': 'Registrasi Customer'
+    };
+    document.getElementById('form-title').textContent = titles[role];
+    document.getElementById('form-' + role).style.display = 'block';
+}
+
+function showRoleSelection() {
+    document.getElementById('step-form').classList.remove('active');
+    document.getElementById('step-role').classList.add('active');
+    document.querySelectorAll('input[name="role"]').forEach(r => r.checked = false);
+}
+
+// Client-side validation before submit
+document.getElementById('register-form').addEventListener('submit', function(e) {
+    const role = document.getElementById('selected-role').value;
+    let valid = true;
+
+    const pwd = this.querySelector('[name="password"]');
+    const pwd2 = this.querySelector('[name="password2"]');
+
+    if (pwd && pwd2 && pwd.value !== pwd2.value) {
+        alert('Password dan konfirmasi password tidak cocok.');
+        valid = false;
+    }
+
+    if (!valid) e.preventDefault();
+});
+</script>
 {% endblock %}

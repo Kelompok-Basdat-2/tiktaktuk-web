@@ -1,0 +1,61 @@
+{% comment %}
+Sidebar template - include with:
+{% include 'core/_sidebar.html' with role='admin' active='dashboard' user_name='Reva Admin' user_role='Administrator' %}
+{% endcomment %}
+
+<aside class="sidebar">
+    <a href="/" class="sidebar-brand">
+        <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+            <circle cx="16" cy="16" r="14" fill="#FF6B4A"/>
+            <circle cx="16" cy="16" r="8" fill="white"/>
+            <circle cx="16" cy="16" r="4" fill="#FF6B4A"/>
+        </svg>
+        TikTakTuk
+    </a>
+    <nav class="sidebar-nav">
+        <a href="/dashboard/{{ role }}/" class="sidebar-item{% if active == 'dashboard' %} active{% endif %}">Dashboard</a>
+        {% if role == 'admin' %}
+            <a href="#" class="sidebar-item">Manajemen Venue</a>
+            <a href="#" class="sidebar-item">Manajemen Kursi</a>
+            <a href="#" class="sidebar-item">Kategori Tiket</a>
+            <a href="#" class="sidebar-item">Manajemen Tiket</a>
+            <a href="#" class="sidebar-item">Semua Order</a>
+            <a href="#" class="sidebar-item">Tiket (Aset)</a>
+            <a href="#" class="sidebar-item">Order (Aset)</a>
+            <a href="/profile/admin/" class="sidebar-item{% if active == 'profile' %} active{% endif %}">Profile</a>
+        {% elif role == 'organizer' %}
+            <a href="#" class="sidebar-item">Event Saya</a>
+            <a href="#" class="sidebar-item">Manajemen Venue</a>
+            <a href="#" class="sidebar-item">Manajemen Kursi</a>
+            <a href="#" class="sidebar-item">Kategori Tiket</a>
+            <a href="#" class="sidebar-item">Manajemen Tiket</a>
+            <a href="#" class="sidebar-item">Semua Order</a>
+            <a href="#" class="sidebar-item">Tiket (Aset)</a>
+            <a href="#" class="sidebar-item">Order (Aset)</a>
+            <a href="/profile/organizer/" class="sidebar-item{% if active == 'profile' %} active{% endif %}">Profile</a>
+        {% else %}
+            <a href="#" class="sidebar-item">Tiket Saya</a>
+            <a href="#" class="sidebar-item">Pesanan</a>
+            <a href="#" class="sidebar-item">Cari Event</a>
+            <a href="#" class="sidebar-item">Promosi</a>
+            <a href="#" class="sidebar-item">Venue</a>
+            <a href="#" class="sidebar-item">Artis</a>
+            <a href="/profile/customer/" class="sidebar-item{% if active == 'profile' %} active{% endif %}">Profile</a>
+        {% endif %}
+    </nav>
+    <div class="sidebar-footer">
+        <div class="user-info">
+            <span class="user-name">{{ user_name|default:'User' }}</span>
+            <span class="user-role">{{ user_role|default:role|title }}</span>
+        </div>
+        <div class="role-switcher">
+            <span class="role-label">Role (Frontend Testing):</span>
+            <div class="role-buttons">
+                <a href="/dashboard/admin/" class="role-btn{% if role == 'admin' %} active{% endif %}">Admin</a>
+                <a href="/dashboard/organizer/" class="role-btn{% if role == 'organizer' %} active{% endif %}">Org</a>
+                <a href="/dashboard/customer/" class="role-btn{% if role == 'customer' %} active{% endif %}">Cust</a>
+            </div>
+        </div>
+        <a href="/login/" class="sidebar-item">Logout</a>
+    </div>
+</aside>
