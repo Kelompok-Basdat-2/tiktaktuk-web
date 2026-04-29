@@ -1,0 +1,474 @@
+{% extends 'core/base.html' %}
+
+{% block body %}
+<div class="layout">
+    {% include 'core/_sidebar.html' with role='admin' active='venue' user_name='Reva Admin' user_role='Administrator' %}
+    <main class="main-content">
+        <header class="header">
+            <div class="header-left">
+                <h1 class="header-title">Manajemen Venue</h1>
+                <p class="header-subtitle">Kelola seluruh venue dan kapasitas kursi</p>
+            </div>
+            <div class="header-right header-actions">
+                <input type="text" class="form-input" placeholder="Cari venue..." style="width: 240px; padding-left: 2.5rem;">
+                <button class="btn btn-primary" type="button" data-modal-open="modal-venue-create">Tambah Venue</button>
+            </div>
+        </header>
+        <div class="page-content">
+            <div class="bento-grid">
+                <div class="bento-card stat-card">
+                    <span class="stat-label">Total Venue</span>
+                    <span class="stat-value">24</span>
+                    <span class="stat-change positive">+3 bulan ini</span>
+                </div>
+                <div class="bento-card stat-card">
+                    <span class="stat-label">Kota Aktif</span>
+                    <span class="stat-value">8</span>
+                    <span class="stat-change positive">+1 bulan ini</span>
+                </div>
+                <div class="bento-card stat-card">
+                    <span class="stat-label">Kapasitas Rata-rata</span>
+                    <span class="stat-value">3.1K</span>
+                    <span class="stat-change positive">Stabil</span>
+                </div>
+                <div class="bento-card stat-card">
+                    <span class="stat-label">Perlu Review</span>
+                    <span class="stat-value">3</span>
+                    <span class="stat-change">Menunggu verifikasi</span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-3" style="gap: 24px;">
+                <div class="card" style="grid-column: span 2;">
+                    <div class="card-header">
+                        <h2 class="card-title">Daftar Venue</h2>
+                        <div class="table-actions">
+                            <button class="btn btn-outline btn-sm">Filter</button>
+                            <button class="btn btn-outline btn-sm">Export</button>
+                        </div>
+                    </div>
+                    <div class="table-toolbar">
+                        <div class="filter-group">
+                            <span class="filter-label">Kota</span>
+                            <select class="form-input">
+                                <option>Semua kota</option>
+                                <option>Jakarta</option>
+                                <option>Bandung</option>
+                                <option>Surabaya</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <span class="filter-label">Kapasitas</span>
+                            <select class="form-input">
+                                <option>Semua kapasitas</option>
+                                <option>&lt; 1.000</option>
+                                <option>1.000 - 3.000</option>
+                                <option>&gt; 3.000</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <span class="filter-label">Status</span>
+                            <select class="form-input">
+                                <option>Semua status</option>
+                                <option>Aktif</option>
+                                <option>Draft</option>
+                                <option>Perlu review</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-secondary btn-sm">Reset</button>
+                    </div>
+                    <div class="table-wrap">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>ID Venue</th>
+                                    <th>Nama</th>
+                                    <th>Kota</th>
+                                    <th>Kapasitas</th>
+                                    <th>Status</th>
+                                    <th>Update</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>ven-001</td>
+                                    <td>
+                                        <div class="table-title">Jakarta Convention Center</div>
+                                        <div class="table-subtitle">Jl. Jend. Gatot Subroto No.1</div>
+                                    </td>
+                                    <td>Jakarta</td>
+                                    <td>5.000</td>
+                                    <td><span class="badge badge-success">Aktif</span></td>
+                                    <td>2 hari lalu</td>
+                                    <td>
+                                        <div class="table-actions">
+                                            <button class="btn btn-outline btn-sm" type="button" data-modal-open="modal-venue-edit">Edit</button>
+                                            <button class="btn btn-danger btn-sm" type="button" data-modal-open="modal-venue-delete">Hapus</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>ven-004</td>
+                                    <td>
+                                        <div class="table-title">Surabaya Grand Ballroom</div>
+                                        <div class="table-subtitle">Jl. Pemuda No.100</div>
+                                    </td>
+                                    <td>Surabaya</td>
+                                    <td>3.000</td>
+                                    <td><span class="badge badge-warning">Perlu review</span></td>
+                                    <td>1 jam lalu</td>
+                                    <td>
+                                        <div class="table-actions">
+                                            <button class="btn btn-outline btn-sm" type="button" data-modal-open="modal-venue-edit">Edit</button>
+                                            <button class="btn btn-danger btn-sm" type="button" data-modal-open="modal-venue-delete">Hapus</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>ven-006</td>
+                                    <td>
+                                        <div class="table-title">Yogyakarta Borobudur Hall</div>
+                                        <div class="table-subtitle">Jl. Solo No.42</div>
+                                    </td>
+                                    <td>Yogyakarta</td>
+                                    <td>2.500</td>
+                                    <td><span class="badge badge-muted">Draft</span></td>
+                                    <td>3 hari lalu</td>
+                                    <td>
+                                        <div class="table-actions">
+                                            <button class="btn btn-outline btn-sm" type="button" data-modal-open="modal-venue-edit">Edit</button>
+                                            <button class="btn btn-danger btn-sm" type="button" data-modal-open="modal-venue-delete">Hapus</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>ven-008</td>
+                                    <td>
+                                        <div class="table-title">Makassar Four Points</div>
+                                        <div class="table-subtitle">Jl. Sultan Hasanuddin No.10</div>
+                                    </td>
+                                    <td>Makassar</td>
+                                    <td>1.200</td>
+                                    <td><span class="badge badge-success">Aktif</span></td>
+                                    <td>5 hari lalu</td>
+                                    <td>
+                                        <div class="table-actions">
+                                            <button class="btn btn-outline btn-sm" type="button" data-modal-open="modal-venue-edit">Edit</button>
+                                            <button class="btn btn-danger btn-sm" type="button" data-modal-open="modal-venue-delete">Hapus</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Ringkasan</h2>
+                    </div>
+                    <div class="summary-list">
+                        <div class="summary-item">
+                            <span class="summary-label">Venue aktif</span>
+                            <span class="summary-value">21</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-label">Draft</span>
+                            <span class="summary-value">2</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-label">Perlu review</span>
+                            <span class="summary-value">3</span>
+                        </div>
+                    </div>
+                    <div class="section-divider"></div>
+                    <h3 class="section-title">Aksi Cepat</h3>
+                    <div class="action-list">
+                        <button class="btn btn-secondary" type="button" data-modal-open="modal-venue-create">Tambah Venue</button>
+                        <button class="btn btn-secondary">Import Data</button>
+                        <button class="btn btn-secondary">Lihat Log Perubahan</button>
+                        <button class="btn btn-secondary">Unduh Template</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<div class="modal is-hidden" aria-hidden="true" id="modal-venue-create">
+    <div class="modal-overlay" data-modal-close></div>
+    <div class="modal-card modal-wide">
+        <div class="modal-header">
+            <h3 class="modal-title">Tambah Venue</h3>
+            <button class="modal-close" type="button" data-modal-close>&times;</button>
+        </div>
+        <form>
+            <div class="form-group">
+                <label class="form-label required">Nama Venue</label>
+                <input class="form-input" type="text" placeholder="Contoh: Bandung Convention Hall">
+            </div>
+            <div class="form-group">
+                <label class="form-label required">Kota</label>
+                <input class="form-input" type="text" placeholder="Contoh: Bandung">
+            </div>
+            <div class="form-group">
+                <label class="form-label required">Alamat</label>
+                <input class="form-input" type="text" placeholder="Contoh: Jl. Asia Afrika No. 90">
+            </div>
+            <div class="form-group">
+                <label class="form-label required">Kapasitas</label>
+                <input class="form-input" type="number" placeholder="Contoh: 3000">
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" type="button" data-modal-close>Batal</button>
+                <button class="btn btn-primary" type="submit">Simpan Venue</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal is-hidden" aria-hidden="true" id="modal-venue-edit">
+    <div class="modal-overlay" data-modal-close></div>
+    <div class="modal-card modal-wide">
+        <div class="modal-header">
+            <h3 class="modal-title">Edit Venue</h3>
+            <button class="modal-close" type="button" data-modal-close>&times;</button>
+        </div>
+        <form>
+            <div class="form-group">
+                <label class="form-label required">Nama Venue</label>
+                <input class="form-input" type="text" value="Jakarta Convention Center">
+            </div>
+            <div class="form-group">
+                <label class="form-label required">Kota</label>
+                <input class="form-input" type="text" value="Jakarta">
+            </div>
+            <div class="form-group">
+                <label class="form-label required">Alamat</label>
+                <input class="form-input" type="text" value="Jl. Jend. Gatot Subroto No.1">
+            </div>
+            <div class="form-group">
+                <label class="form-label required">Kapasitas</label>
+                <input class="form-input" type="number" value="5000">
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" type="button" data-modal-close>Batal</button>
+                <button class="btn btn-primary" type="submit">Simpan Perubahan</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal is-hidden" aria-hidden="true" id="modal-venue-delete">
+    <div class="modal-overlay" data-modal-close></div>
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3 class="modal-title">Hapus Venue</h3>
+            <button class="modal-close" type="button" data-modal-close>&times;</button>
+        </div>
+        <p>Anda akan menghapus venue ini. Tindakan ini tidak bisa dibatalkan.</p>
+        <div class="modal-actions">
+            <button class="btn btn-secondary" type="button" data-modal-close>Batal</button>
+            <button class="btn btn-danger" type="button">Hapus Venue</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(() => {
+    const openButtons = document.querySelectorAll('[data-modal-open]');
+    const closeButtons = document.querySelectorAll('[data-modal-close]');
+
+    const openModal = (id) => {
+        const modal = document.getElementById(id);
+        if (!modal) {
+            return;
+        }
+        modal.classList.remove('is-hidden');
+        modal.setAttribute('aria-hidden', 'false');
+    };
+
+    const closeModal = (modal) => {
+        if (!modal) {
+            return;
+        }
+        modal.classList.add('is-hidden');
+        modal.setAttribute('aria-hidden', 'true');
+    };
+
+    openButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+            openModal(button.getAttribute('data-modal-open'));
+        });
+    });
+
+    closeButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+            closeModal(button.closest('.modal'));
+        });
+    });
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key !== 'Escape') {
+            return;
+        }
+        document.querySelectorAll('.modal:not(.is-hidden)').forEach(closeModal);
+    });
+})();
+</script>
+{% endblock %}
+
+{% block style %}
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .table-toolbar {
+            display: flex;
+            align-items: flex-end;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            min-width: 160px;
+        }
+
+        .filter-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .table-wrap {
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: auto;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+        }
+
+        .data-table th {
+            text-align: left;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-secondary);
+            background: var(--background);
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .data-table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .data-table tbody tr:hover {
+            background: var(--background);
+        }
+
+        .table-title {
+            font-weight: 600;
+        }
+
+        .table-subtitle {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+
+        .badge-success {
+            background: #ECFDF3;
+            color: #027A48;
+        }
+
+        .badge-warning {
+            background: #FFF7ED;
+            color: #C2410C;
+        }
+
+        .badge-muted {
+            background: #F3F4F6;
+            color: #6B7280;
+        }
+
+        .summary-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .summary-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 12px;
+            background: var(--background);
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+        }
+
+        .summary-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .summary-value {
+            font-weight: 600;
+        }
+
+        .section-divider {
+            border-top: 1px solid var(--border);
+            margin: 16px 0;
+        }
+
+        .section-title {
+            font-size: 0.875rem;
+            margin-bottom: 12px;
+        }
+
+        .modal.is-hidden {
+            display: none;
+        }
+
+        .modal-wide {
+            max-width: 560px;
+        }
+
+        @media (max-width: 1024px) {
+            .header-actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .bento-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .grid-cols-3 {
+                grid-template-columns: 1fr;
+            }
+
+            .table-actions {
+                flex-wrap: wrap;
+            }
+        }
+{% endblock %}

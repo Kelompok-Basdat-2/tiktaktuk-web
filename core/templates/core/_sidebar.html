@@ -15,7 +15,7 @@ Sidebar template - include with:
     <nav class="sidebar-nav">
         <a href="/dashboard/{{ role }}/" class="sidebar-item{% if active == 'dashboard' %} active{% endif %}">Dashboard</a>
         {% if role == 'admin' %}
-            <a href="#" class="sidebar-item">Manajemen Venue</a>
+            <a href="/venue/admin/" class="sidebar-item{% if active == 'venue' %} active{% endif %}">Manajemen Venue</a>
             <a href="#" class="sidebar-item">Manajemen Kursi</a>
             <a href="#" class="sidebar-item">Kategori Tiket</a>
             <a href="#" class="sidebar-item">Manajemen Tiket</a>
@@ -25,7 +25,7 @@ Sidebar template - include with:
             <a href="/profile/admin/" class="sidebar-item{% if active == 'profile' %} active{% endif %}">Profile</a>
         {% elif role == 'organizer' %}
             <a href="#" class="sidebar-item">Event Saya</a>
-            <a href="#" class="sidebar-item">Manajemen Venue</a>
+            <a href="/venue/organizer/" class="sidebar-item{% if active == 'venue' %} active{% endif %}">Manajemen Venue</a>
             <a href="#" class="sidebar-item">Manajemen Kursi</a>
             <a href="#" class="sidebar-item">Kategori Tiket</a>
             <a href="#" class="sidebar-item">Manajemen Tiket</a>
@@ -38,7 +38,7 @@ Sidebar template - include with:
             <a href="#" class="sidebar-item">Pesanan</a>
             <a href="#" class="sidebar-item">Cari Event</a>
             <a href="#" class="sidebar-item">Promosi</a>
-            <a href="#" class="sidebar-item">Venue</a>
+            <a href="/venue/customer/" class="sidebar-item{% if active == 'venue' %} active{% endif %}">Venue</a>
             <a href="#" class="sidebar-item">Artis</a>
             <a href="/profile/customer/" class="sidebar-item{% if active == 'profile' %} active{% endif %}">Profile</a>
         {% endif %}
