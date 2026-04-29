@@ -51,6 +51,21 @@ def venue_customer(request):
     return render(request, 'core/venue_customer.html', {})
 
 
+def event_admin(request):
+    """Admin event management - frontend only."""
+    return render(request, 'core/event_admin.html', {})
+
+
+def event_organizer(request):
+    """Organizer event management - frontend only."""
+    return render(request, 'core/event_organizer.html', {})
+
+
+def event_customer(request):
+    """Customer event directory - frontend only."""
+    return render(request, 'core/event_customer.html', {})
+
+
 def profile_customer(request):
     """Customer profile page - frontend only."""
     return render(request, 'core/profile_customer.html', {})
