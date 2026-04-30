@@ -1,0 +1,228 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Hapus Artist{% endblock %}
+
+{% block style %}
+
+.form-page-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 40px 32px;
+}
+
+.delete-card {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 40px;
+    width: 100%;
+    max-width: 480px;
+    box-shadow: var(--shadow);
+}
+
+.delete-card-header {
+    margin-bottom: 24px;
+}
+
+.delete-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    background: #FEE2E2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    margin-bottom: 16px;
+}
+
+.delete-card-header h1 {
+    font-size: 1.375rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+}
+
+.delete-card-header p {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    line-height: 1.6;
+}
+
+.delete-info-box {
+    background: var(--background);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    margin: 24px 0;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.delete-artist-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #5B67F1, #4F46E5);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.delete-info-details .artist-name {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 1rem;
+    margin-bottom: 4px;
+}
+
+.delete-info-details .artist-id {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-family: monospace;
+}
+
+.delete-info-details .artist-genre {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: var(--primary-light);
+    color: var(--primary);
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    margin-top: 6px;
+}
+
+.warning-text {
+    font-size: 0.8rem;
+    color: #991B1B;
+    background: #FEF2F2;
+    border: 1px solid #FECACA;
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.form-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 11px 24px;
+    border-radius: var(--radius);
+    font-weight: 600;
+    font-size: 0.875rem;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+    text-decoration: none;
+}
+
+.btn-secondary {
+    background: white;
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+    flex: 1;
+}
+
+.btn-secondary:hover {
+    background: var(--background);
+    border-color: var(--text-secondary);
+}
+
+.btn-danger {
+    background: #EF4444;
+    color: white;
+    flex: 1;
+}
+
+.btn-danger:hover {
+    background: #DC2626;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+{% endblock %}
+
+{% block body %}
+
+<div class="layout">
+
+    {% include 'core/_sidebar.html' %}
+
+    <main class="main-content">
+
+        <header class="header">
+            <div class="header-left">
+                <span class="header-title">Hapus Artist</span>
+                <span class="header-subtitle">Daftar Artist / Hapus</span>
+            </div>
+        </header>
+
+        <div class="page-content">
+            <div class="form-page-wrapper">
+                <div class="delete-card">
+
+                    <div class="delete-card-header">
+                        <div class="delete-icon">🗑️</div>
+                        <h1>Hapus Artis</h1>
+                        <p>Apakah Anda yakin ingin menghapus artis ini? Tindakan ini tidak dapat dibatalkan.</p>
+                    </div>
+
+                    <!-- Artist info preview -->
+                    <div class="delete-info-box">
+                        <div class="delete-artist-avatar">
+                            {{ artist.name|slice:":1"|upper }}
+                        </div>
+                        <div class="delete-info-details">
+                            <div class="artist-name">{{ artist.name }}</div>
+                            <div class="artist-id">{{ artist.id }}</div>
+                            {% if artist.genre %}
+                            <span class="artist-genre">{{ artist.genre }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="warning-text">
+                        ⚠️ Data artis akan dihapus secara permanen dari sistem dan tidak dapat dipulihkan.
+                    </div>
+
+                    <form method="POST">
+                        {% csrf_token %}
+                        <div class="form-actions">
+                            <a href="{% url 'core:artist_list' %}" class="btn btn-secondary">
+                                Batal
+                            </a>
+                            <button type="submit" class="btn btn-danger">
+                                Confirm Deletion
+                            </button>
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+</div>
+
+{% endblock %}
