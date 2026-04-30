@@ -17,7 +17,7 @@ Sidebar template - include with:
         {% if role == 'admin' %}
             <a href="/venue/admin/" class="sidebar-item{% if active == 'venue' %} active{% endif %}">Manajemen Venue</a>
             <a href="/event/admin/" class="sidebar-item{% if active == 'event' %} active{% endif %}">Manajemen Event</a>
-            <a href="#" class="sidebar-item">Manajemen Kursi</a>
+            <a href="/seats/admin/" class="sidebar-item{% if active == 'seats' %} active{% endif %}">Manajemen Kursi</a>
             <a href="#" class="sidebar-item">Kategori Tiket</a>
             <a href="/tickets/" class="sidebar-item{% if active == 'tickets' %} active{% endif %}">Manajemen Tiket</a>
             <a href="#" class="sidebar-item">Semua Order</a>
@@ -27,7 +27,7 @@ Sidebar template - include with:
         {% elif role == 'organizer' %}
             <a href="/event/organizer/" class="sidebar-item{% if active == 'event' %} active{% endif %}">Event Saya</a>
             <a href="/venue/organizer/" class="sidebar-item{% if active == 'venue' %} active{% endif %}">Manajemen Venue</a>
-            <a href="#" class="sidebar-item">Manajemen Kursi</a>
+            <a href="/seats/organizer/" class="sidebar-item{% if active == 'seats' %} active{% endif %}">Manajemen Kursi</a>
             <a href="#" class="sidebar-item">Kategori Tiket</a>
             <a href="/tickets/organizer/" class="sidebar-item{% if active == 'tickets' %} active{% endif %}">Manajemen Tiket</a>
             <a href="#" class="sidebar-item">Semua Order</a>
@@ -38,6 +38,7 @@ Sidebar template - include with:
             <a href="/my-tickets/" class="sidebar-item{% if active == 'my_tickets' %} active{% endif %}">Tiket Saya</a>
             <a href="#" class="sidebar-item">Pesanan</a>
             <a href="/event/customer/" class="sidebar-item{% if active == 'event' %} active{% endif %}">Cari Event</a>
+            <a href="/seats/" class="sidebar-item{% if active == 'seats' %} active{% endif %}">Kursi</a>
             <a href="#" class="sidebar-item">Promosi</a>
             <a href="/venue/customer/" class="sidebar-item{% if active == 'venue' %} active{% endif %}">Venue</a>
             <a href="#" class="sidebar-item">Artis</a>
