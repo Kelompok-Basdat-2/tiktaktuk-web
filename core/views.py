@@ -238,3 +238,40 @@ def profile_organizer(request):
 def profile_admin(request):
     """Admin profile page - frontend only."""
     return render(request, 'core/profile_admin.html', {})
+
+
+def checkout(request):
+    """Checkout page - order creation/ticket purchase - frontend only."""
+    # Mock event data
+    event = {
+        'id': 'evt_001',
+        'name': 'Konser Melodi Senja',
+        'category': 'Musik',
+        'date': '25 Mei 2026',
+        'time': '19:00',
+        'venue': 'Jakarta Convention Center',
+        'image': '#',
+    }
+
+    # Mock ticket categories
+    ticket_categories = [
+        {'id': 'cat_1', 'name': 'VVIP', 'price': 1500000, 'available': 50},
+        {'id': 'cat_2', 'name': 'VIP', 'price': 750000, 'available': 80},
+        {'id': 'cat_3', 'name': 'Category 1', 'price': 450000, 'available': 300},
+        {'id': 'cat_4', 'name': 'Category 2', 'price': 250000, 'available': 500},
+    ]
+
+    # Mock seating
+    seating = {
+        'rows': ['A1', 'A2', 'A3', 'A4', 'B1', 'B2', 'B3', 'B4', 'C1', 'C2', 'C3', 'C4'],
+    }
+
+    return render(
+        request,
+        'core/checkout.html',
+        {
+            'event': event,
+            'ticket_categories': ticket_categories,
+            'seating': seating,
+        },
+    )
