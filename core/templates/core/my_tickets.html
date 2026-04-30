@@ -1,0 +1,119 @@
+{% extends 'core/base.html' %}
+
+{% block body %}
+<div class="layout">
+    {% include 'core/_sidebar.html' with role='customer' active='my_tickets' user_name='Budi Santoso' user_role='Customer' %}
+    <main class="main-content">
+        <header class="header">
+            <div class="header-left">
+                <h1 class="header-title">Tiket Saya</h1>
+                <p class="header-subtitle">Kelola tiketevent Anda</p>
+            </div>
+            <div class="header-right">
+                <input type="text" class="form-input" placeholder="Cari tiket..." style="width: 280px;">
+            </div>
+        </header>
+        <div class="page-content">
+            <!-- Stats -->
+            <div class="bento-grid" style="grid-template-columns: repeat(2, 1fr); margin-bottom: 24px;">
+                <div class="bento-card stat-card">
+                    <span class="stat-label">Total Tiket</span>
+                    <span class="stat-value">5</span>
+                </div>
+                <div class="bento-card stat-card">
+                    <span class="stat-label">Event Berbeda</span>
+                    <span class="stat-value">3</span>
+                </div>
+            </div>
+
+            <!-- My Tickets -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Tiket Anda</h2>
+                </div>
+                <div class="ticket-grid" id="my-ticket-list">
+                    <!-- Sample Ticket Cards -->
+                    <div class="ticket-card">
+                        <div class="ticket-header">
+                            <span class="ticket-code">TKT-2026-0001</span>
+                            <span class="badge badge-primary">Aktif</span>
+                        </div>
+                        <div class="ticket-body">
+                            <p class="ticket-event">Coldplay: Music of the Spheres</p>
+                            <p class="ticket-category">VVIP - Rp 2.500.000</p>
+                            <p class="ticket-seat">Seat: WVIP - Row A, No. 1</p>
+                            <p class="ticket-date">Tanggal: 15 Juni 2026</p>
+                        </div>
+                    </div>
+                    <div class="ticket-card">
+                        <div class="ticket-header">
+                            <span class="ticket-code">TKT-2026-0002</span>
+                            <span class="badge badge-primary">Aktif</span>
+                        </div>
+                        <div class="ticket-body">
+                            <p class="ticket-event">Jisoo: Blinks Camp</p>
+                            <p class="ticket-category">VIP - Rp 1.500.000</p>
+                            <p class="ticket-seat">Seat: VIP - Row B, No. 5</p>
+                            <p class="ticket-date">Tanggal: 20 Juni 2026</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+{% endblock %}
+
+{% block style %}
+.ticket-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px;
+}
+
+.ticket-card {
+    background: var(--background);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+}
+
+.ticket-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.ticket-code {
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+.ticket-body {
+    margin-bottom: 12px;
+}
+
+.ticket-body p {
+    font-size: 0.875rem;
+    margin-bottom: 4px;
+}
+
+.ticket-event {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.ticket-category {
+    color: var(--text-secondary);
+}
+
+.ticket-seat {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+}
+
+.ticket-date {
+    color: var(--text-secondary);
+}
+{% endblock %}

@@ -223,6 +223,34 @@ def promotion(request):
             'stats': stats,
         },
     )
+def venue_admin(request):
+    """Admin venue management - frontend only."""
+    return render(request, 'core/venue_admin.html', {})
+
+
+def venue_organizer(request):
+    """Organizer venue management - frontend only."""
+    return render(request, 'core/venue_organizer.html', {})
+
+
+def venue_customer(request):
+    """Customer venue directory - frontend only."""
+    return render(request, 'core/venue_customer.html', {})
+
+
+def event_admin(request):
+    """Admin event management - frontend only."""
+    return render(request, 'core/event_admin.html', {})
+
+
+def event_organizer(request):
+    """Organizer event management - frontend only."""
+    return render(request, 'core/event_organizer.html', {})
+
+
+def event_customer(request):
+    """Customer event directory - frontend only."""
+    return render(request, 'core/event_customer.html', {})
 
 
 def profile_customer(request):
@@ -266,12 +294,117 @@ def checkout(request):
         'rows': ['A1', 'A2', 'A3', 'A4', 'B1', 'B2', 'B3', 'B4', 'C1', 'C2', 'C3', 'C4'],
     }
 
-    return render(
-        request,
-        'core/checkout.html',
-        {
-            'event': event,
-            'ticket_categories': ticket_categories,
-            'seating': seating,
-        },
-    )
+    if request.method == "POST":
+        messages.success(request, "Artist berhasil dihapus.")
+        return redirect("artist_list")
+
+    return render(request, "artist/artist_delete.html", context)
+
+
+ticket_categories = [
+{
+"id": "CAT001",
+"name": "VIP",
+"quota": 100,
+"price": 500000,
+"event": "Coldplay Concert"
+},
+{
+"id": "CAT002",
+"name": "Regular",
+"quota": 300,
+"price": 200000,
+"event": "Coldplay Concert"
+}
+]
+def artist_read(request):
+    """Fitur 10 - R Artist (customer/organizer/admin, tanpa action button)"""
+    return render(request, 'artist/artist_read.html')
+
+def ticket_category_list(request):
+    """
+    Fitur 11/12 - CUD + R Ticket Category
+    Tampilan ini: sidebar admin, dengan tombol tambah + modal CUD
+    URL: /ticket-categories/
+    """
+    return render(request, 'ticket_category/ticket_category_list.html')
+
+def ticket_category_list_customer(request):
+    """
+    Fitur 12 - R Ticket Category
+    Tampilan untuk Customer/Guest - read only, tanpa tombol aksi
+    URL: /ticket-categories/customer/
+    """
+    return render(request, 'ticket_category/ticket_category_list_customer.html')
+
+# =============================================================================
+# Features 18-20: Ticket Management
+# =============================================================================
+
+def tickets_admin(request):
+    """Admin ticket list page - all tickets system-wide."""
+    return render(request, 'core/tickets_admin.html', {})
+
+
+def tickets_organizer(request):
+    """Organizer ticket list page - only their events."""
+    return render(request, 'core/tickets_organizer.html', {})
+
+
+def my_tickets(request):
+    """Customer ticket list page."""
+    return render(request, 'core/my_tickets.html', {})
+
+
+def ticket_create_admin(request):
+    """Create ticket - Admin only."""
+    return render(request, 'core/tickets_admin.html', {})
+
+
+def ticket_create_organizer(request):
+    """Create ticket - Organizer only."""
+    return render(request, 'core/tickets_organizer.html', {})
+
+
+def ticket_update(request, ticket_id):
+    """Update ticket - Admin, Organizer (filtered by backend)."""
+    return render(request, 'core/tickets_admin.html', {})
+
+
+def ticket_delete(request, ticket_id):
+    """Delete ticket - Admin, Organizer (filtered by backend)."""
+    return render(request, 'core/tickets_admin.html', {})
+
+
+# =============================================================================
+# Features 21-22: Seat Management
+# =============================================================================
+
+def seats(request):
+    """Seat list page - unified, role determined by sidebar."""
+    return render(request, 'core/seats.html', {})
+
+
+def seats_admin(request):
+    """Seat list page - Admin view (all venues)."""
+    return render(request, 'core/seats_admin.html', {})
+
+
+def seats_organizer(request):
+    """Seat list page - Organizer view (their venues only)."""
+    return render(request, 'core/seats_organizer.html', {})
+
+
+def seat_create(request):
+    """Create seat - Admin, Organizer (filtered by backend)."""
+    return render(request, 'core/seats.html', {})
+
+
+def seat_update(request, seat_id):
+    """Update seat - Admin, Organizer (filtered by backend)."""
+    return render(request, 'core/seats.html', {})
+
+
+def seat_delete(request, seat_id):
+    """Delete seat - Admin, Organizer (filtered by backend)."""
+    return render(request, 'core/seats.html', {})
