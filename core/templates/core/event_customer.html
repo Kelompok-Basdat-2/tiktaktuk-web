@@ -1,0 +1,352 @@
+{% extends 'core/base.html' %}
+
+{% block body %}
+<div class="layout">
+    {% include 'core/_sidebar.html' with role='customer' active='event' user_name='Reviewer Satu' user_role='Customer' %}
+    <main class="main-content">
+        <header class="header">
+            <div class="header-left">
+                <h1 class="header-title">Cari Event</h1>
+                <p class="header-subtitle">Jelajahi event terbaru dan venue favorit</p>
+            </div>
+            <div class="header-right header-actions">
+                <input type="text" class="form-input" placeholder="Cari event..." style="width: 260px; padding-left: 2.5rem;">
+                <button class="btn btn-outline">Filter</button>
+            </div>
+        </header>
+        <div class="page-content">
+            <div class="bento-grid">
+                <div class="bento-card stat-card">
+                    <span class="stat-label">Event Tersedia</span>
+                    <span class="stat-value">156</span>
+                    <span class="stat-change positive">+12 bulan ini</span>
+                </div>
+                <div class="bento-card stat-card">
+                    <span class="stat-label">Event Dekat</span>
+                    <span class="stat-value">18</span>
+                    <span class="stat-change positive">Minggu ini</span>
+                </div>
+                <div class="bento-card stat-card">
+                    <span class="stat-label">Kota Aktif</span>
+                    <span class="stat-value">8</span>
+                    <span class="stat-change positive">Tersedia</span>
+                </div>
+                <div class="bento-card stat-card">
+                    <span class="stat-label">Promo Aktif</span>
+                    <span class="stat-value">6</span>
+                    <span class="stat-change">Diskon terbaru</span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-3" style="gap: 24px;">
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Filter Event</h2>
+                    </div>
+                    <div class="filter-stack">
+                        <div class="form-group">
+                            <label class="form-label">Kota</label>
+                            <select class="form-input">
+                                <option>Semua kota</option>
+                                <option>Jakarta</option>
+                                <option>Bandung</option>
+                                <option>Surabaya</option>
+                                <option>Bali</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Kategori</label>
+                            <select class="form-input">
+                                <option>Semua kategori</option>
+                                <option>Musik</option>
+                                <option>Konferensi</option>
+                                <option>Komedi</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Tanggal</label>
+                            <select class="form-input">
+                                <option>Semua tanggal</option>
+                                <option>Minggu ini</option>
+                                <option>Bulan ini</option>
+                                <option>3 bulan</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Sortir</label>
+                            <select class="form-input">
+                                <option>Paling populer</option>
+                                <option>Terdekat</option>
+                                <option>Harga termurah</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-secondary">Terapkan Filter</button>
+                    </div>
+                </div>
+
+                <div class="card" style="grid-column: span 2;">
+                    <div class="card-header">
+                        <h2 class="card-title">Daftar Event</h2>
+                        <div class="table-actions">
+                            <button class="btn btn-outline btn-sm">Rekomendasi</button>
+                            <button class="btn btn-outline btn-sm">Favorit</button>
+                        </div>
+                    </div>
+                    <div class="event-grid">
+                        <div class="event-card">
+                            <div class="event-card-header">
+                                <div>
+                                    <h3 class="event-title">SoundFest 2026</h3>
+                                    <p class="event-subtitle">Jakarta Convention Center</p>
+                                </div>
+                                <span class="badge badge-primary">Musik</span>
+                            </div>
+                            <div class="event-meta">
+                                <div class="meta-item">
+                                    <span class="meta-label">Tanggal</span>
+                                    <span class="meta-value">15 Mei 2026</span>
+                                </div>
+                                <div class="meta-item">
+                                    <span class="meta-label">Harga mulai</span>
+                                    <span class="meta-value">350K</span>
+                                </div>
+                                <div class="meta-item">
+                                    <span class="meta-label">Kota</span>
+                                    <span class="meta-value">Jakarta</span>
+                                </div>
+                            </div>
+                            <div class="event-tags">
+                                <span class="chip">VIP tersedia</span>
+                                <span class="chip">On Sale</span>
+                            </div>
+                            <div class="event-actions">
+                                <button class="btn btn-outline btn-sm">Lihat Detail</button>
+                                <button class="btn btn-primary btn-sm">Beli Tiket</button>
+                            </div>
+                        </div>
+
+                        <div class="event-card">
+                            <div class="event-card-header">
+                                <div>
+                                    <h3 class="event-title">Tech Conference Indonesia</h3>
+                                    <p class="event-subtitle">Bandung Techno Park</p>
+                                </div>
+                                <span class="badge badge-success">Konferensi</span>
+                            </div>
+                            <div class="event-meta">
+                                <div class="meta-item">
+                                    <span class="meta-label">Tanggal</span>
+                                    <span class="meta-value">20 Mei 2026</span>
+                                </div>
+                                <div class="meta-item">
+                                    <span class="meta-label">Harga mulai</span>
+                                    <span class="meta-value">100K</span>
+                                </div>
+                                <div class="meta-item">
+                                    <span class="meta-label">Kota</span>
+                                    <span class="meta-value">Bandung</span>
+                                </div>
+                            </div>
+                            <div class="event-tags">
+                                <span class="chip">Early bird</span>
+                                <span class="chip">Speaker internasional</span>
+                            </div>
+                            <div class="event-actions">
+                                <button class="btn btn-outline btn-sm">Lihat Detail</button>
+                                <button class="btn btn-primary btn-sm">Beli Tiket</button>
+                            </div>
+                        </div>
+
+                        <div class="event-card">
+                            <div class="event-card-header">
+                                <div>
+                                    <h3 class="event-title">Comedy Festival Bali</h3>
+                                    <p class="event-subtitle">Bali Nusa Dua Theater</p>
+                                </div>
+                                <span class="badge badge-muted">Komedi</span>
+                            </div>
+                            <div class="event-meta">
+                                <div class="meta-item">
+                                    <span class="meta-label">Tanggal</span>
+                                    <span class="meta-value">05 Jul 2026</span>
+                                </div>
+                                <div class="meta-item">
+                                    <span class="meta-label">Harga mulai</span>
+                                    <span class="meta-value">500K</span>
+                                </div>
+                                <div class="meta-item">
+                                    <span class="meta-label">Kota</span>
+                                    <span class="meta-value">Bali</span>
+                                </div>
+                            </div>
+                            <div class="event-tags">
+                                <span class="chip">Sold fast</span>
+                                <span class="chip">Headliner</span>
+                            </div>
+                            <div class="event-actions">
+                                <button class="btn btn-outline btn-sm">Lihat Detail</button>
+                                <button class="btn btn-primary btn-sm">Beli Tiket</button>
+                            </div>
+                        </div>
+
+                        <div class="event-card">
+                            <div class="event-card-header">
+                                <div>
+                                    <h3 class="event-title">Startup Summit Yogyakarta</h3>
+                                    <p class="event-subtitle">Yogyakarta Borobudur Hall</p>
+                                </div>
+                                <span class="badge badge-primary">Teknologi</span>
+                            </div>
+                            <div class="event-meta">
+                                <div class="meta-item">
+                                    <span class="meta-label">Tanggal</span>
+                                    <span class="meta-value">20 Agu 2026</span>
+                                </div>
+                                <div class="meta-item">
+                                    <span class="meta-label">Harga mulai</span>
+                                    <span class="meta-value">250K</span>
+                                </div>
+                                <div class="meta-item">
+                                    <span class="meta-label">Kota</span>
+                                    <span class="meta-value">Yogyakarta</span>
+                                </div>
+                            </div>
+                            <div class="event-tags">
+                                <span class="chip">Tech talk</span>
+                                <span class="chip">Networking</span>
+                            </div>
+                            <div class="event-actions">
+                                <button class="btn btn-outline btn-sm">Lihat Detail</button>
+                                <button class="btn btn-primary btn-sm">Beli Tiket</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+{% endblock %}
+
+{% block style %}
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .filter-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .badge-success {
+            background: #ECFDF3;
+            color: #027A48;
+        }
+
+        .badge-muted {
+            background: #F3F4F6;
+            color: #6B7280;
+        }
+
+        .event-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px;
+        }
+
+        .event-card {
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px;
+            background: var(--surface);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            box-shadow: var(--shadow);
+        }
+
+        .event-card-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .event-title {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .event-subtitle {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .event-meta {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            background: var(--background);
+            border-radius: var(--radius);
+            padding: 12px;
+        }
+
+        .meta-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .meta-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            color: var(--text-secondary);
+        }
+
+        .meta-value {
+            font-weight: 600;
+        }
+
+        .event-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .chip {
+            background: var(--background);
+            border: 1px solid var(--border);
+            border-radius: 9999px;
+            padding: 4px 10px;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .event-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        @media (max-width: 1024px) {
+            .header-actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .bento-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .grid-cols-3 {
+                grid-template-columns: 1fr;
+            }
+
+            .event-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+{% endblock %}
