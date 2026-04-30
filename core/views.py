@@ -129,22 +129,31 @@ def artist_list(request):
     return render(request, "artist/artist_list.html", context)
 
 def artist_create(request):
+    context = {
+        'role': 'admin',
+    }
+
     if request.method == "POST":
         name = request.POST.get("name")
         genre = request.POST.get("genre")
 
         if not name:
             messages.error(request, "Name wajib diisi.")
-            return render(request, "artist/artist_create.html")
+            return render(request, "artist/artist_create.html", context)
 
         messages.success(request, "Artist berhasil ditambahkan.")
         return redirect("artist_list")
 
-    return render(request, "artist/artist_create.html")
+    return render(request, "artist/artist_create.html", context)
 
 
 def artist_update(request, id):
     artist = next((a for a in artists if a["id"] == id), None)
+    
+    context = {
+        'role': 'admin',
+        'artist': artist
+    }
 
     if request.method == "POST":
         name = request.POST.get("name")
@@ -152,29 +161,27 @@ def artist_update(request, id):
 
         if not name:
             messages.error(request, "Name wajib diisi.")
-
-            return render(request, "artist/artist_update.html", {
-                "artist": artist
-            })
+            return render(request, "artist/artist_update.html", context)
 
         messages.success(request, "Artist berhasil diperbarui.")
         return redirect("artist_list")
 
-    return render(request, "artist/artist_update.html", {
-        "artist": artist
-    })
+    return render(request, "artist/artist_update.html", context)
 
 
 def artist_delete(request, id):
     artist = next((a for a in artists if a["id"] == id), None)
 
+    context = {
+        'role': 'admin',
+        'artist': artist
+    }
+
     if request.method == "POST":
         messages.success(request, "Artist berhasil dihapus.")
         return redirect("artist_list")
 
-    return render(request, "artist/artist_delete.html", {
-        "artist": artist
-    })
+    return render(request, "artist/artist_delete.html", context)
 
 
 ticket_categories = [

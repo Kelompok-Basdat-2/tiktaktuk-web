@@ -30,13 +30,20 @@
     text-align: left;
     font-size: 0.75rem;
     text-transform: uppercase;
+    letter-spacing: 0.5px;
     color: var(--text-secondary);
     border-bottom: 1px solid var(--border);
+    font-weight: 600;
 }
 
 .artist-table td {
     padding: 20px 0;
     border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+}
+
+.artist-table tbody tr:last-child td {
+    border-bottom: none;
 }
 
 .artist-info {
@@ -54,17 +61,39 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    font-weight: 700;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.artist-name {
     font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 2px;
+}
+
+.artist-id {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-family: monospace;
 }
 
 .genre-badge {
     display: inline-flex;
-    padding: 6px 12px;
+    align-items: center;
+    padding: 5px 12px;
     border-radius: 999px;
     background: var(--primary-light);
     color: var(--primary);
     font-size: 0.75rem;
     font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.genre-badge.empty {
+    background: var(--background);
+    color: var(--text-muted);
 }
 
 .artist-actions {
@@ -83,15 +112,19 @@
     justify-content: center;
     text-decoration: none;
     color: var(--text-secondary);
-    transition: 0.2s;
+    transition: all 0.2s;
+    cursor: pointer;
 }
 
 .action-btn:hover {
     background: var(--background);
+    border-color: var(--text-secondary);
 }
 
-.delete-btn:hover {
+.action-btn.delete-btn:hover {
     color: var(--error);
+    border-color: var(--error);
+    background: #FEF2F2;
 }
 
 .stats-grid {
@@ -116,32 +149,39 @@
     letter-spacing: 1px;
     margin-bottom: 10px;
     font-weight: 600;
+    text-transform: uppercase;
 }
 
 .stats-card h2 {
     font-size: 2rem;
     font-weight: 700;
+    color: var(--text-primary);
 }
 
 .table-toolbar {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 24px;
+    margin-bottom: 20px;
 }
 
 .search-input {
     width: 340px;
-    padding: 12px 16px;
-    border-radius: 14px;
+    padding: 10px 16px;
+    border-radius: 12px;
     border: 1px solid var(--border);
-    background: white;
+    background: var(--background);
     font-family: inherit;
+    font-size: 0.875rem;
+    color: var(--text-primary);
+    transition: all 0.2s;
 }
 
 .search-input:focus {
     outline: none;
     border-color: var(--primary);
+    background: white;
+    box-shadow: 0 0 0 3px rgba(255, 107, 74, 0.1);
 }
 
 .artist-count {
@@ -149,15 +189,19 @@
     font-size: 0.875rem;
 }
 
-.genre-badge {
-    display: inline-flex;
-    align-items: center;
-    padding: 6px 12px;
-    border-radius: 999px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    background: #EEF2FF;
-    color: #4F46E5;
+.empty-state {
+    text-align: center;
+    padding: 64px 24px;
+    color: var(--text-secondary);
+}
+
+.empty-state-icon {
+    font-size: 3rem;
+    margin-bottom: 16px;
+}
+
+.empty-state p {
+    font-size: 0.875rem;
 }
 
 {% endblock %}
@@ -166,38 +210,40 @@
 
 <div class="layout">
 
+    {% include 'core/_sidebar.html' %}
+
     <main class="main-content">
 
         <header class="header">
             <div class="header-left">
                 <span class="header-title">Daftar Artist</span>
-                <span class="header-subtitle">
-                    Kelola artist yang ada di platform TikTakTuk
-                </span>
+                <span class="header-subtitle">Kelola artist yang ada di platform TikTakTuk</span>
             </div>
         </header>
 
-        <div class="stats-grid">
-
-            <div class="stats-card">
-                <span class="stats-label">TOTAL ARTIS</span>
-                <h2>{{ total_artists }}</h2>
-            </div>
-        
-            <div class="stats-card">
-                <span class="stats-label">GENRE</span>
-                <h2>{{ total_genres }}</h2>
-            </div>
-        
-            <div class="stats-card">
-                <span class="stats-label">TAMPIL DI EVENT</span>
-                <h2>{{ total_event_artists }}</h2>
-            </div>
-        
-        </div>
-
         <div class="page-content">
 
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+
+                <div class="stats-card">
+                    <span class="stats-label">Total Artis</span>
+                    <h2>{{ total_artists }}</h2>
+                </div>
+
+                <div class="stats-card">
+                    <span class="stats-label">Genre</span>
+                    <h2>{{ total_genres }}</h2>
+                </div>
+
+                <div class="stats-card">
+                    <span class="stats-label">Tampil di Event</span>
+                    <h2>{{ total_event_artists }}</h2>
+                </div>
+
+            </div>
+
+            <!-- Table Section -->
             <div class="page-header">
                 <div class="page-title">
                     <h1>Daftar Artist</h1>
@@ -212,97 +258,89 @@
             </div>
 
             <div class="card">
+
                 <div class="table-toolbar">
 
-                    <form method="GET" class="search-form">
-                
+                    <form method="GET" style="display:flex; align-items:center; gap:8px;">
                         <input
                             type="text"
                             name="search"
                             placeholder="Cari nama atau genre..."
                             value="{{ search_query }}"
                             class="search-input"
+                            autocomplete="off"
                         >
-                
                     </form>
-                
+
                     <span class="artist-count">
                         {{ artist_found }} artis ditemukan
                     </span>
-                
+
                 </div>
 
-                <table class="artist-table">
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert {% if 'berhasil' in message.tags or message.tags == 'success' %}alert-success{% else %}alert-error{% endif %}" style="margin-bottom:16px;">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
 
+                <table class="artist-table">
                     <thead>
                         <tr>
                             <th>Artist</th>
                             <th>Genre</th>
-
                             {% if role == 'admin' %}
                             <th>Action</th>
                             {% endif %}
                         </tr>
                     </thead>
-
                     <tbody>
-
                         {% for artist in artists %}
                         <tr>
-
                             <td>
                                 <div class="artist-info">
-
                                     <div class="artist-avatar">
-                                        {{ artist.name|slice:":1" }}
+                                        {{ artist.name|slice:":1"|upper }}
                                     </div>
-
                                     <div>
-                                        <div style="font-weight: 600;">
-                                            {{ artist.name }}
-                                        </div>
-
-                                        <div style="font-size: 0.8rem; color: var(--text-secondary);">
-                                            {{ artist.id }}
-                                        </div>
+                                        <div class="artist-name">{{ artist.name }}</div>
+                                        <div class="artist-id">{{ artist.id }}</div>
                                     </div>
-
                                 </div>
                             </td>
-
                             <td>
-                                <span class="genre-badge">
-                                    {{ artist.genre }}
-                                </span>
+                                {% if artist.genre %}
+                                <span class="genre-badge">{{ artist.genre }}</span>
+                                {% else %}
+                                <span class="genre-badge empty">—</span>
+                                {% endif %}
                             </td>
-
                             {% if role == 'admin' %}
                             <td>
                                 <div class="artist-actions">
-
-                                    <a
-                                        href="{% url 'core:artist_update' artist.id %}"
-                                        class="action-btn"
-                                    >
+                                    <a href="{% url 'core:artist_update' artist.id %}" class="action-btn" title="Edit">
                                         ✏️
                                     </a>
-
-                                    <a
-                                        href="{% url 'core:artist_delete' artist.id %}"
-                                        class="action-btn delete-btn"
-                                    >
+                                    <a href="{% url 'core:artist_delete' artist.id %}" class="action-btn delete-btn" title="Hapus">
                                         🗑️
                                     </a>
-
                                 </div>
                             </td>
                             {% endif %}
-
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="{% if role == 'admin' %}3{% else %}2{% endif %}">
+                                <div class="empty-state">
+                                    <div class="empty-state-icon">🎵</div>
+                                    <p>Belum ada artist yang terdaftar.</p>
+                                </div>
+                            </td>
                         </tr>
                         {% endfor %}
-
                     </tbody>
-
                 </table>
 
             </div>
