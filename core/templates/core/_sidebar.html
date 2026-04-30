@@ -16,9 +16,9 @@ Sidebar template - include with:
         <a href="/dashboard/{{ role }}/" class="sidebar-item{% if active == 'dashboard' %} active{% endif %}">Dashboard</a>
         {% if role == 'admin' %}
             <a href="#" class="sidebar-item">Manajemen Venue</a>
-            <a href="#" class="sidebar-item">Manajemen Kursi</a>
+            <a href="/seats/" class="sidebar-item{% if active == 'seats' %} active{% endif %}">Manajemen Kursi</a>
             <a href="#" class="sidebar-item">Kategori Tiket</a>
-            <a href="#" class="sidebar-item">Manajemen Tiket</a>
+            <a href="/tickets/" class="sidebar-item{% if active == 'tickets' %} active{% endif %}">Manajemen Tiket</a>
             <a href="#" class="sidebar-item">Semua Order</a>
             <a href="#" class="sidebar-item">Tiket (Aset)</a>
             <a href="#" class="sidebar-item">Order (Aset)</a>
@@ -26,15 +26,15 @@ Sidebar template - include with:
         {% elif role == 'organizer' %}
             <a href="#" class="sidebar-item">Event Saya</a>
             <a href="#" class="sidebar-item">Manajemen Venue</a>
-            <a href="#" class="sidebar-item">Manajemen Kursi</a>
+            <a href="/seats/" class="sidebar-item{% if active == 'seats' %} active{% endif %}">Manajemen Kursi</a>
             <a href="#" class="sidebar-item">Kategori Tiket</a>
-            <a href="#" class="sidebar-item">Manajemen Tiket</a>
+            <a href="/tickets/organizer/" class="sidebar-item{% if active == 'tickets' %} active{% endif %}">Manajemen Tiket</a>
             <a href="#" class="sidebar-item">Semua Order</a>
             <a href="#" class="sidebar-item">Tiket (Aset)</a>
             <a href="#" class="sidebar-item">Order (Aset)</a>
             <a href="/profile/organizer/" class="sidebar-item{% if active == 'profile' %} active{% endif %}">Profile</a>
         {% else %}
-            <a href="#" class="sidebar-item">Tiket Saya</a>
+            <a href="/my-tickets/" class="sidebar-item{% if active == 'my_tickets' %} active{% endif %}">Tiket Saya</a>
             <a href="#" class="sidebar-item">Pesanan</a>
             <a href="#" class="sidebar-item">Cari Event</a>
             <a href="#" class="sidebar-item">Promosi</a>
