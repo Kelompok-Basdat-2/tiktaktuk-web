@@ -1,0 +1,30 @@
+<h1>Ticket Categories</h1>
+
+<table border="1">
+    <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Quota</th>
+        <th>Price</th>
+        <th>Event</th>
+        <th>Action</th>
+    </tr>
+
+{% for tc in ticket_categories %}
+<tr>
+    <td>{{ tc.id }}</td>
+    <td>{{ tc.name }}</td>
+    <td>{{ tc.quota }}</td>
+    <td>{{ tc.price }}</td>
+    <td>{{ tc.event }}</td>
+
+    <td>
+        {% if role == 'admin' or role == 'organizer' %}
+            <button>Update</button>
+            <button>Delete</button>
+        {% endif %}
+    </td>
+</tr>
+{% endfor %}
+
+</table>

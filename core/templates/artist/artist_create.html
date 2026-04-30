@@ -1,0 +1,153 @@
+
+{% extends 'core/base.html' %}
+
+{% block title %}Daftar Artist{% endblock %}
+
+{% block style %}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.page-title h1 {
+    font-size: 2rem;
+    margin-bottom: 4px;
+}
+
+.page-title p {
+    color: var(--text-secondary);
+}
+
+.artist-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.artist-table th {
+    padding: 16px 0;
+    text-align: left;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--border);
+}
+
+.artist-table td {
+    padding: 20px 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.artist-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.artist-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #5B67F1, #4F46E5);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+}
+
+.genre-badge {
+    display: inline-flex;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: var(--primary-light);
+    color: var(--primary);
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.artist-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.action-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    color: var(--text-secondary);
+    transition: 0.2s;
+}
+
+.action-btn:hover {
+    background: var(--background);
+}
+
+.delete-btn:hover {
+    color: var(--error);
+}
+
+{% endblock %}
+
+{% block body %}
+{% block content %}
+
+<div class="form-container">
+    <div class="form-card">
+
+        <h1>Create Artist</h1>
+        <p>Tambahkan artist baru ke sistem</p>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert-error">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <form method="POST">
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label>Name *</label>
+                <input
+                    type="text"
+                    name="name"
+                    placeholder="Masukkan nama artist"
+                >
+            </div>
+
+            <div class="form-group">
+                <label>Genre</label>
+                <input
+                    type="text"
+                    name="genre"
+                    placeholder="Masukkan genre"
+                >
+            </div>
+
+            <div class="form-actions">
+                <a href="{% url 'core:artist_list' %}" class="btn-secondary">
+                    Cancel
+                </a>
+
+                <button type="submit" class="btn-primary">
+                    Create
+                </button>
+            </div>
+        </form>
+
+    </div>
+</div>
+
+{% endblock %}
+{% endblock %}
