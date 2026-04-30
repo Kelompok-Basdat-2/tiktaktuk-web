@@ -139,7 +139,7 @@ def artist_create(request):
 
         if not name:
             messages.error(request, "Name wajib diisi.")
-            return render(request, "artist/artist_create.html", context)
+            return render(request, "artist/artist_create.html")
 
         messages.success(request, "Artist berhasil ditambahkan.")
         return redirect("artist_list")
@@ -200,10 +200,22 @@ ticket_categories = [
 "event": "Coldplay Concert"
 }
 ]
+def artist_read(request):
+    """Fitur 10 - R Artist (customer/organizer/admin, tanpa action button)"""
+    return render(request, 'artist/artist_read.html')
 
 def ticket_category_list(request):
-    context = {
-        "ticket_categories": ticket_categories,
-        "role": "admin"}
-    return render(request, 'ticket_category/ticket_category_list.html',context)
+    """
+    Fitur 11/12 - CUD + R Ticket Category
+    Tampilan ini: sidebar admin, dengan tombol tambah + modal CUD
+    URL: /ticket-categories/
+    """
+    return render(request, 'ticket_category/ticket_category_list.html')
 
+def ticket_category_list_customer(request):
+    """
+    Fitur 12 - R Ticket Category
+    Tampilan untuk Customer/Guest - read only, tanpa tombol aksi
+    URL: /ticket-categories/customer/
+    """
+    return render(request, 'ticket_category/ticket_category_list_customer.html')
