@@ -1,6 +1,7 @@
 from datetime import date
 
 from django.shortcuts import render, redirect
+from django.contrib import messages
 
 
 def landing_view(request):
@@ -268,6 +269,98 @@ def profile_admin(request):
     return render(request, 'core/profile_admin.html', {})
 
 
+# =============================================================================
+# Features 9-10: Artist Management
+# =============================================================================
+
+artists = [
+    {"id": "ART001", "name": "Fourtwnty", "genre": "Indie Folk", "on_event": True},
+    {"id": "ART002", "name": "Hindia", "genre": "Indie Pop", "on_event": True},
+    {"id": "ART003", "name": "Tulus", "genre": "Pop", "on_event": True},
+    {"id": "ART004", "name": "Nadin Amizah", "genre": "Folk", "on_event": True},
+    {"id": "ART005", "name": "Pamungkas", "genre": "Singer-Songwriter", "on_event": True},
+    {"id": "ART006", "name": "Raisa", "genre": "R&B / Pop", "on_event": False},
+    {"id": "ART007", "name": "Isyana Sarasvati", "genre": "Pop", "on_event": True},
+    {"id": "ART008", "name": "Ardhito Pramono", "genre": "Jazz / Pop", "on_event": False},
+]
+
+
+def artist_list(request):
+    """Fitur 9/10 - R Artist list (admin with actions, customer read-only)."""
+    role = (request.GET.get('role') or 'customer').strip().lower()
+    if role not in {'admin', 'organizer', 'customer'}:
+        role = 'customer'
+
+    search_query = (request.GET.get('search') or '').strip().lower()
+    filtered_artists = [a for a in artists if not search_query or search_query in a['name'].lower() or search_query in (a.get('genre') or '').lower()]
+
+    total_artists = len(artists)
+    total_genres = len(set(a.get('genre') for a in artists if a.get('genre')))
+    total_event_artists = sum(1 for a in artists if a.get('on_event'))
+
+    return render(request, 'artist/artist_list.html', {
+        'role': role,
+        'artists': filtered_artists,
+        'artist_found': len(filtered_artists),
+        'search_query': search_query,
+        'total_artists': total_artists,
+        'total_genres': total_genres,
+        'total_event_artists': total_event_artists,
+    })
+
+
+def artist_read(request):
+    """Fitur 10 - R Artist (customer/organizer/admin, tanpa action button)."""
+    return render(request, 'artist/artist_read.html')
+
+
+def artist_create(request):
+    """Fitur 9 - C Artist (admin only)."""
+    if request.method == 'POST':
+        name = request.POST.get('name', '').strip()
+        genre = request.POST.get('genre', '').strip()
+        if name:
+            new_id = f"ART{len(artists) + 1:03d}"
+            artists.append({'id': new_id, 'name': name, 'genre': genre, 'on_event': False})
+            messages.success(request, f"Artist '{name}' berhasil ditambahkan.")
+            return redirect('artist_list')
+        else:
+            messages.error(request, "Nama artist wajib diisi.")
+    return render(request, 'artist/artist_create.html', {'form_data': {}})
+
+
+def artist_update(request, id):
+    """Fitur 10 - U Artist (admin only)."""
+    artist = next((a for a in artists if a['id'] == id), None)
+    if not artist:
+        messages.error(request, "Artist tidak ditemukan.")
+        return redirect('artist_list')
+    if request.method == 'POST':
+        name = request.POST.get('name', '').strip()
+        genre = request.POST.get('genre', '').strip()
+        if name:
+            artist['name'] = name
+            artist['genre'] = genre
+            messages.success(request, f"Artist '{name}' berhasil diperbarui.")
+            return redirect('artist_list')
+        else:
+            messages.error(request, "Nama artist wajib diisi.")
+    return render(request, 'artist/artist_update.html', {'artist': artist})
+
+
+def artist_delete(request, id):
+    """Fitur 10 - D Artist (admin only)."""
+    artist = next((a for a in artists if a['id'] == id), None)
+    if not artist:
+        messages.error(request, "Artist tidak ditemukan.")
+        return redirect('artist_list')
+    if request.method == 'POST':
+        artists.remove(artist)
+        messages.success(request, f"Artist '{artist['name']}' berhasil dihapus.")
+        return redirect('artist_list')
+    return render(request, 'artist/artist_delete.html', {'artist': artist})
+
+
 def checkout(request):
     """Checkout page - order creation/ticket purchase - frontend only."""
     # Mock event data
@@ -294,32 +387,12 @@ def checkout(request):
         'rows': ['A1', 'A2', 'A3', 'A4', 'B1', 'B2', 'B3', 'B4', 'C1', 'C2', 'C3', 'C4'],
     }
 
-    if request.method == "POST":
-        messages.success(request, "Artist berhasil dihapus.")
-        return redirect("artist_list")
+    return render(request, 'core/checkout.html', {
+        'event': event,
+        'ticket_categories': ticket_categories,
+        'seating': seating,
+    })
 
-    return render(request, "artist/artist_delete.html", context)
-
-
-ticket_categories = [
-{
-"id": "CAT001",
-"name": "VIP",
-"quota": 100,
-"price": 500000,
-"event": "Coldplay Concert"
-},
-{
-"id": "CAT002",
-"name": "Regular",
-"quota": 300,
-"price": 200000,
-"event": "Coldplay Concert"
-}
-]
-def artist_read(request):
-    """Fitur 10 - R Artist (customer/organizer/admin, tanpa action button)"""
-    return render(request, 'artist/artist_read.html')
 
 def ticket_category_list(request):
     """

@@ -27,8 +27,8 @@ urlpatterns = [
     path('profile/organizer/', views.profile_organizer, name='profile_organizer'),
     path('profile/admin/', views.profile_admin, name='profile_admin'),
     
-    path('artists/', views.artist_list, name='artist_list'), # fitur 10 - semua login
-    path('artists/read/', views.artist_read, name='artist_read'),   
+    path('artists/', views.artist_list, name='artist_list'),
+    path('artists/read/', views.artist_read, name='artist_read'),
     path('artists/create/', views.artist_create, name='artist_create'),
     path("artists/<str:id>/update/", views.artist_update, name="artist_update"),
     path("artists/<str:id>/delete/", views.artist_delete, name="artist_delete"),
