@@ -6,14 +6,8 @@
     <main class="main-content">
         <header class="header">
             <div class="header-left">
-                <h1 class="header-title">Manajemen Kursi</h1>
-                <p class="header-subtitle">Kelola kursi untuk setiap venue</p>
-            </div>
-            <div class="header-right">
-                <button class="btn btn-primary" onclick="openCreateModal()">
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-                    Tambah Kursi
-                </button>
+                <h1 class="header-title">Daftar Kursi</h1>
+                <p class="header-subtitle">Lihat kursi untuk setiap venue</p>
             </div>
         </header>
         <div class="page-content">
@@ -46,7 +40,6 @@
                             <th>Baris</th>
                             <th>No. Kursi</th>
                             <th>Status</th>
-                            <th>Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -56,10 +49,6 @@
                             <td>A</td>
                             <td>1</td>
                             <td><span class="badge badge-success">Tersedia</span></td>
-                            <td class="actions-cell">
-                                <button class="btn btn-outline btn-sm" onclick="openEditModal('seat_001')">Edit</button>
-                                <button class="btn btn-outline-danger btn-sm" onclick="openDeleteModal('seat_001')">Hapus</button>
-                            </td>
                         </tr>
                         <tr>
                             <td>Gelora Bung Karno</td>
@@ -67,15 +56,6 @@
                             <td>A</td>
                             <td>2</td>
                             <td><span class="badge badge-error">Terisi</span></td>
-                            <td class="actions-cell">
-                                <span class="locked-indicator">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                                        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                                    </svg>
-                                    Terisi
-                                </span>
-                            </td>
                         </tr>
                         <tr>
                             <td>Jakarta Concert Hall</td>
@@ -83,10 +63,6 @@
                             <td>B</td>
                             <td>1</td>
                             <td><span class="badge badge-success">Tersedia</span></td>
-                            <td class="actions-cell">
-                                <button class="btn btn-outline btn-sm" onclick="openEditModal('seat_003')">Edit</button>
-                                <button class="btn btn-outline-danger btn-sm" onclick="openDeleteModal('seat_003')">Hapus</button>
-                            </td>
                         </tr>
                     </tbody>
                 </table>
@@ -94,138 +70,6 @@
         </div>
     </main>
 </div>
-
-<!-- Create Seat Modal -->
-<div class="modal" id="create-modal" style="display: none;">
-    <div class="modal-overlay" onclick="closeCreateModal()"></div>
-    <div class="modal-card" style="max-width: 440px;">
-        <div class="modal-header">
-            <h3 class="modal-title">Tambah Kursi</h3>
-            <button class="modal-close" onclick="closeCreateModal()">&times;</button>
-        </div>
-        <form method="POST" action="/seats/create/admin/">
-            {% csrf_token %}
-            <div class="form-group">
-                <label class="form-label required">Venue</label>
-                <select class="form-input" name="venue_id" required>
-                    <option value="">-- Pilih Venue --</option>
-                    <option value="venue_001">Gelora Bung Karno</option>
-                    <option value="venue_002">Jakarta Concert Hall</option>
-                    <option value="venue_003">Bandung Convention Center</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label class="form-label required">Section</label>
-                <input type="text" class="form-input" name="section" placeholder="Contoh: WVIP, VIP, Festival" required>
-            </div>
-            <div class="form-group">
-                <label class="form-label required">Baris</label>
-                <input type="text" class="form-input" name="row_number" placeholder="Contoh: A, B, C, 1, 2" required>
-            </div>
-            <div class="form-group">
-                <label class="form-label required">No. Kursi</label>
-                <input type="text" class="form-input" name="seat_number" placeholder="Contoh: 1, 2, 3" required>
-            </div>
-            <div class="modal-actions">
-                <button type="button" class="btn btn-secondary" onclick="closeCreateModal()">Batal</button>
-                <button type="submit" class="btn btn-primary">Tambah</button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<!-- Edit Seat Modal -->
-<div class="modal" id="edit-modal" style="display: none;">
-    <div class="modal-overlay" onclick="closeEditModal()"></div>
-    <div class="modal-card" style="max-width: 440px;">
-        <div class="modal-header">
-            <h3 class="modal-title">Edit Kursi</h3>
-            <button class="modal-close" onclick="closeEditModal()">&times;</button>
-        </div>
-        <form method="POST" action="/seats/update/">
-            {% csrf_token %}
-            <input type="hidden" id="edit-seat-id" name="seat_id">
-            <div class="form-group">
-                <label class="form-label required">Venue</label>
-                <select class="form-input" name="venue_id" id="edit-venue" required>
-                    <option value="">-- Pilih Venue --</option>
-                    <option value="venue_001">Gelora Bung Karno</option>
-                    <option value="venue_002">Jakarta Concert Hall</option>
-                    <option value="venue_003">Bandung Convention Center</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label class="form-label required">Section</label>
-                <input type="text" class="form-input" name="section" id="edit-section" required>
-            </div>
-            <div class="form-group">
-                <label class="form-label required">Baris</label>
-                <input type="text" class="form-input" name="row_number" id="edit-row" required>
-            </div>
-            <div class="form-group">
-                <label class="form-label required">No. Kursi</label>
-                <input type="text" class="form-input" name="seat_number" id="edit-seat-number" required>
-            </div>
-            <div class="modal-actions">
-                <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Batal</button>
-                <button type="submit" class="btn btn-primary">Simpan</button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<!-- Delete Confirmation Modal -->
-<div class="modal" id="delete-modal" style="display: none;">
-    <div class="modal-overlay" onclick="closeDeleteModal()"></div>
-    <div class="modal-card" style="max-width: 400px;">
-        <div class="modal-header">
-            <h3 class="modal-title">Konfirmasi Hapus Kursi</h3>
-            <button class="modal-close" onclick="closeDeleteModal()">&times;</button>
-        </div>
-        <p style="margin-bottom: 16px;">Apakah Anda yakin ingin menghapus kursi ini?</p>
-        <input type="hidden" id="delete-seat-id">
-        <div class="modal-actions">
-            <button class="btn btn-secondary" onclick="closeDeleteModal()">Batal</button>
-            <button class="btn btn-danger" onclick="confirmDelete()">Hapus</button>
-        </div>
-    </div>
-</div>
-{% endblock %}
-
-{% block scripts %}
-<script>
-function openCreateModal() {
-    document.getElementById('create-modal').style.display = 'flex';
-}
-
-function closeCreateModal() {
-    document.getElementById('create-modal').style.display = 'none';
-}
-
-function openEditModal(seatId) {
-    document.getElementById('edit-seat-id').value = seatId;
-    document.getElementById('edit-modal').style.display = 'flex';
-}
-
-function closeEditModal() {
-    document.getElementById('edit-modal').style.display = 'none';
-}
-
-function openDeleteModal(seatId) {
-    document.getElementById('delete-seat-id').value = seatId;
-    document.getElementById('delete-modal').style.display = 'flex';
-}
-
-function closeDeleteModal() {
-    document.getElementById('delete-modal').style.display = 'none';
-}
-
-function confirmDelete() {
-    const seatId = document.getElementById('delete-seat-id').value;
-    console.log('Deleting seat:', seatId);
-    closeDeleteModal();
-}
-</script>
 {% endblock %}
 
 {% block style %}
