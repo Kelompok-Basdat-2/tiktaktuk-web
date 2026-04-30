@@ -20,7 +20,7 @@ Sidebar template - include with:
             <a href="#" class="sidebar-item">Kategori Tiket</a>
             <a href="#" class="sidebar-item">Manajemen Tiket</a>
             <a href="/promotion?role=admin" class="sidebar-item{% if active == 'promotions' %} active{% endif %}">Promosi</a>
-            <a href="#" class="sidebar-item">Semua Order</a>
+            <a href="/order?role=admin" class="sidebar-item{% if active == 'orders' %} active{% endif %}">Semua Order</a>
             <a href="#" class="sidebar-item">Tiket (Aset)</a>
             <a href="#" class="sidebar-item">Order (Aset)</a>
             <a href="/profile/admin/" class="sidebar-item{% if active == 'profile' %} active{% endif %}">Profile</a>
@@ -30,14 +30,14 @@ Sidebar template - include with:
             <a href="#" class="sidebar-item">Manajemen Kursi</a>
             <a href="#" class="sidebar-item">Kategori Tiket</a>
             <a href="#" class="sidebar-item">Manajemen Tiket</a>
-            <a href="#" class="sidebar-item">Semua Order</a>
+            <a href="/order?role=organizer" class="sidebar-item{% if active == 'orders' %} active{% endif %}">Semua Order</a>
             <a href="#" class="sidebar-item">Tiket (Aset)</a>
             <a href="#" class="sidebar-item">Order (Aset)</a>
             <a href="/promotion?role=organizer" class="sidebar-item{% if active == 'promotions' %} active{% endif %}">Promosi</a>
             <a href="/profile/organizer/" class="sidebar-item{% if active == 'profile' %} active{% endif %}">Profile</a>
         {% else %}
             <a href="#" class="sidebar-item">Tiket Saya</a>
-            <a href="#" class="sidebar-item">Pesanan</a>
+            <a href="/order?role=customer" class="sidebar-item{% if active == 'orders' %} active{% endif %}">Pesanan</a>
             <a href="#" class="sidebar-item">Cari Event</a>
             <a href="/promotion?role=customer" class="sidebar-item{% if active == 'promotions' %} active{% endif %}">Promosi</a>
             <a href="#" class="sidebar-item">Venue</a>

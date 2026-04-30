@@ -1,4 +1,4 @@
-from datetime import date, timedelta
+from datetime import date
 
 from django.shortcuts import render, redirect
 
@@ -36,6 +36,127 @@ def dashboard_organizer(request):
 def dashboard_customer(request):
     """Customer dashboard - frontend only."""
     return render(request, 'core/dashboard_customer.html', {})
+
+
+def order(request):
+    """Order list page - frontend only."""
+    role = (request.GET.get('role') or 'customer').strip().lower()
+    if role not in {'admin', 'organizer', 'customer', 'guest'}:
+        role = 'customer'
+
+    orders = {
+        'customer': [
+            {
+                'id': 'ord_001',
+                'customer': 'You',
+                'date': '2024-04-10 14:32',
+                'status': 'Lunas',
+                'status_key': 'paid',
+                'total': 'Rp 1,200,000',
+            },
+            {
+                'id': 'ord_002',
+                'customer': 'You',
+                'date': '2024-04-11 09:15',
+                'status': 'Lunas',
+                'status_key': 'paid',
+                'total': 'Rp 150,000',
+            },
+        ],
+        'organizer': [
+            {
+                'id': 'ord_001',
+                'customer': 'Budi Santoso',
+                'date': '2024-04-10 14:32',
+                'status': 'Lunas',
+                'status_key': 'paid',
+                'total': 'Rp 1,200,000',
+            },
+            {
+                'id': 'ord_002',
+                'customer': 'Budi Santoso',
+                'date': '2024-04-11 09:15',
+                'status': 'Lunas',
+                'status_key': 'paid',
+                'total': 'Rp 150,000',
+            },
+            {
+                'id': 'ord_003',
+                'customer': 'Siti Rahayu',
+                'date': '2024-04-12 18:44',
+                'status': 'Pending',
+                'status_key': 'pending',
+                'total': 'Rp 1,500,000',
+            },
+        ],
+        'admin': [
+            {
+                'id': 'ord_001',
+                'customer': 'Budi Santoso',
+                'date': '2024-04-10 14:32',
+                'status': 'Lunas',
+                'status_key': 'paid',
+                'total': 'Rp 1,200,000',
+            },
+            {
+                'id': 'ord_002',
+                'customer': 'Budi Santoso',
+                'date': '2024-04-11 09:15',
+                'status': 'Lunas',
+                'status_key': 'paid',
+                'total': 'Rp 150,000',
+            },
+            {
+                'id': 'ord_003',
+                'customer': 'Siti Rahayu',
+                'date': '2024-04-12 18:44',
+                'status': 'Pending',
+                'status_key': 'pending',
+                'total': 'Rp 1,500,000',
+            },
+            {
+                'id': 'ord_004',
+                'customer': 'Siti Rahayu',
+                'date': '2024-04-13 11:00',
+                'status': 'Dibatalkan',
+                'status_key': 'cancelled',
+                'total': 'Rp 700,000',
+            },
+        ],
+        'guest': [],
+    }
+
+    current_orders = orders.get(role, orders['customer'])
+    total_order = len(current_orders)
+    paid_count = sum(1 for order_item in current_orders if order_item['status_key'] == 'paid')
+    pending_count = sum(1 for order_item in current_orders if order_item['status_key'] == 'pending')
+    total_revenue = 'Rp 1,350,000' if role in {'admin', 'organizer'} else None
+
+    return render(
+        request,
+        'core/order.html',
+        {
+            'role': role,
+            'is_admin': role == 'admin',
+            'is_organizer': role == 'organizer',
+            'is_customer': role == 'customer',
+            'page_title': 'Daftar Order',
+            'page_subtitle': {
+                'customer': 'Riwayat pembelian tiket Anda',
+                'organizer': 'Order dari event yang Anda selenggarakan',
+                'admin': 'Semua order yang terdaftar di sistem',
+                'guest': 'Data order frontend testing',
+            }.get(role, 'Riwayat pembelian tiket Anda'),
+            'stats': {
+                'total_order': total_order,
+                'paid_count': paid_count,
+                'pending_count': pending_count,
+                'total_revenue': total_revenue,
+            },
+            'orders': current_orders,
+            'selected_status': 'all',
+        },
+    )
 
 
 def promotion(request):
