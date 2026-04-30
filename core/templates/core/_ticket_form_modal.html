@@ -1,0 +1,118 @@
+{% comment %}
+Ticket Form Modal - used for both Create and Update
+Include with: {% include 'core/_ticket_form_modal.html' with modal_id='create-modal' modal_title='Tambah Tiket' action='/tickets/create/' %}
+{% endcomment %}
+<div class="modal" id="{{ modal_id }}" style="display: none;">
+    <div class="modal-overlay" onclick="closeModal('{{ modal_id }}')"></div>
+    <div class="modal-card" style="max-width: 500px;">
+        <div class="modal-header">
+            <h3 class="modal-title">{{ modal_title }}</h3>
+            <button class="modal-close" onclick="closeModal('{{ modal_id }}')">&times;</button>
+        </div>
+        <form method="POST" action="{{ action }}">
+            {% csrf_token %}
+            <div class="form-group">
+                <label class="form-label required">Order</label>
+                <select class="form-input" id="order-select" name="order_id" required onchange="onOrderChange()">
+                    <option value="">-- Pilih Order --</option>
+                    <option value="ord_001">ORD-2026-0001 - Budi Santoso - Coldplay Concert</option>
+                    <option value="ord_002">ORD-2026-0002 - Siti Rahayu - Jisoo Fanmeeting</option>
+                    <option value="ord_003">ORD-2026-0003 - Ahmad Fauzi - Dewa 19 Concert</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label required">Kategori Tiket</label>
+                <select class="form-input" id="category-select" name="category_id" required onchange="onCategoryChange()">
+                    <option value="">-- Pilih Kategori --</option>
+                    <option value="cat_001">VVIP - Rp 2.500.000 - (5/10 terpakai)</option>
+                    <option value="cat_002">VIP - Rp 1.500.000 - (8/15 terpakai)</option>
+                    <option value="cat_003">Festival - Rp 750.000 - (12/20 terpakai)</option>
+                </select>
+            </div>
+            <div class="form-group" id="seat-group" style="display: none;">
+                <label class="form-label">Kursi (Opsional)</label>
+                <select class="form-input" id="seat-select" name="seat_id">
+                    <option value="">-- Pilih Kursi --</option>
+                    <option value="seat_001">WVIP - Row A, No. 1</option>
+                    <option value="seat_002">WVIP - Row A, No. 2</option>
+                    <option value="seat_003">VIP - Row B, No. 1</option>
+                </select>
+                <span class="form-hint">Hanya tampil jika venue menggunakan reserved seating</span>
+            </div>
+            <div class="form-group" id="status-group">
+                <label class="form-label">Status Tiket</label>
+                <select class="form-input" id="status-select" name="status">
+                    <option value="active">Aktif</option>
+                    <option value="used">Terpakai</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Kode Tiket</label>
+                <input type="text" class="form-input" value="Akan di-generate otomatis" disabled>
+                <span class="form-hint">Kode tiket akan dibuat secara otomatis</span>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('{{ modal_id }}')">Batal</button>
+                <button type="submit" class="btn btn-primary">Simpan</button>
+            </div>
+        </form>
+    </div>
+</div>
+<script>
+// Cascading dropdown logic for ticket creation
+function onOrderChange() {
+    const orderId = document.getElementById('order-select').value;
+    const categorySelect = document.getElementById('category-select');
+    const seatGroup = document.getElementById('seat-group');
+
+    // Reset dependent dropdowns
+    categorySelect.innerHTML = '<option value="">-- Pilih Kategori --</option>';
+    seatGroup.style.display = 'none';
+
+    if (!orderId) return;
+
+    // Simulate filtering categories by event (frontend placeholder)
+    // In real implementation, this would fetch from backend
+    const sampleCategories = {
+        'ord_001': [
+            { id: 'cat_001', name: 'VVIP - Rp 2.500.000 - (5/10 terpakai)' },
+            { id: 'cat_002', name: 'VIP - Rp 1.500.000 - (8/15 terpakai)' },
+            { id: 'cat_003', name: 'Festival - Rp 750.000 - (12/20 terpakai)' }
+        ],
+        'ord_002': [
+            { id: 'cat_002', name: 'VIP - Rp 1.500.000 - (5/10 terpakai)' },
+            { id: 'cat_003', name: 'Festival - Rp 750.000 - (10/15 terpakai)' }
+        ],
+        'ord_003': [
+            { id: 'cat_001', name: 'VVIP - Rp 2.000.000 - (3/8 terpakai)' },
+            { id: 'cat_003', name: 'Festival - Rp 500.000 - (20/25 terpakai)' }
+        ]
+    };
+
+    const categories = sampleCategories[orderId] || [];
+    categories.forEach(cat => {
+        const option = document.createElement('option');
+        option.value = cat.id;
+        option.textContent = cat.name;
+        categorySelect.appendChild(option);
+    });
+}
+
+function onCategoryChange() {
+    const categoryId = document.getElementById('category-select').value;
+    const seatGroup = document.getElementById('seat-group');
+
+    if (!categoryId) {
+        seatGroup.style.display = 'none';
+        return;
+    }
+
+    // Show seat dropdown for reserved seating venues (simulated)
+    // In real implementation, check if event's venue has reserved seating
+    seatGroup.style.display = 'block';
+}
+
+function closeModal(modalId) {
+    document.getElementById(modalId).style.display = 'none';
+}
+</script>

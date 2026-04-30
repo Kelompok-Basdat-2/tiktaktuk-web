@@ -79,3 +79,76 @@ def profile_organizer(request):
 def profile_admin(request):
     """Admin profile page - frontend only."""
     return render(request, 'core/profile_admin.html', {})
+
+
+# =============================================================================
+# Features 18-20: Ticket Management
+# =============================================================================
+
+def tickets_admin(request):
+    """Admin ticket list page - all tickets system-wide."""
+    return render(request, 'core/tickets_admin.html', {})
+
+
+def tickets_organizer(request):
+    """Organizer ticket list page - only their events."""
+    return render(request, 'core/tickets_organizer.html', {})
+
+
+def my_tickets(request):
+    """Customer ticket list page."""
+    return render(request, 'core/my_tickets.html', {})
+
+
+def ticket_create_admin(request):
+    """Create ticket - Admin only."""
+    return render(request, 'core/tickets_admin.html', {})
+
+
+def ticket_create_organizer(request):
+    """Create ticket - Organizer only."""
+    return render(request, 'core/tickets_organizer.html', {})
+
+
+def ticket_update(request, ticket_id):
+    """Update ticket - Admin, Organizer (filtered by backend)."""
+    return render(request, 'core/tickets_admin.html', {})
+
+
+def ticket_delete(request, ticket_id):
+    """Delete ticket - Admin, Organizer (filtered by backend)."""
+    return render(request, 'core/tickets_admin.html', {})
+
+
+# =============================================================================
+# Features 21-22: Seat Management
+# =============================================================================
+
+def seats(request):
+    """Seat list page - unified, role determined by sidebar."""
+    return render(request, 'core/seats.html', {})
+
+
+def seats_admin(request):
+    """Seat list page - Admin view (all venues)."""
+    return render(request, 'core/seats_admin.html', {})
+
+
+def seats_organizer(request):
+    """Seat list page - Organizer view (their venues only)."""
+    return render(request, 'core/seats_organizer.html', {})
+
+
+def seat_create(request):
+    """Create seat - Admin, Organizer (filtered by backend)."""
+    return render(request, 'core/seats.html', {})
+
+
+def seat_update(request, seat_id):
+    """Update seat - Admin, Organizer (filtered by backend)."""
+    return render(request, 'core/seats.html', {})
+
+
+def seat_delete(request, seat_id):
+    """Delete seat - Admin, Organizer (filtered by backend)."""
+    return render(request, 'core/seats.html', {})
