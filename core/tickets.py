@@ -264,7 +264,7 @@ def get_all_seats() -> list[dict]:
 
 
 def get_seats_by_organizer(user_id: str) -> list[dict]:
-    """Seats for venues owned by this organizer."""
+    """Seats for venues where this organizer has events."""
     with connection.cursor() as c:
         c.execute('''
             SELECT s.seat_id, s.section, s.seat_number, s.row_number,
@@ -272,11 +272,12 @@ def get_seats_by_organizer(user_id: str) -> list[dict]:
                    CASE WHEN hr.seat_id IS NOT NULL THEN true ELSE false END AS occupied
             FROM SEAT s
             JOIN VENUE v ON s.venue_id = v.venue_id
-            JOIN ORGANIZER org ON org.organizer_id IN (
-                SELECT organizer_id FROM EVENT WHERE venue_id = s.venue_id
-            )
             LEFT JOIN HAS_RELATIONSHIP hr ON s.seat_id = hr.seat_id
-            WHERE org.user_id = %s
+            WHERE EXISTS (
+                SELECT 1 FROM EVENT e
+                JOIN ORGANIZER o ON e.organizer_id = o.organizer_id
+                WHERE e.venue_id = s.venue_id AND o.user_id = %s
+            )
             ORDER BY v.venue_name, s.section, s.row_number, s.seat_number
         ''', [user_id])
         columns = [col[0] for col in c.description]

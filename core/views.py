@@ -879,15 +879,6 @@ def seat_delete(request, seat_id):
     if role not in ('admin', 'organizer'):
         return redirect('core:login')
 
-    if tkt.is_seat_occupied(seat_id):
-        seat = tkt.get_seat_by_id(seat_id)
-        name = f'{seat["section"]} - Baris {seat["row_number"]} No. {seat["seat_number"]}' if seat else seat_id
-        messages.error(
-            request,
-            f'Kursi {name} tidak dapat dihapus karena sudah terisi.',
-        )
-        return redirect('core:seats')
-
     if request.method == 'POST':
         try:
             with transaction.atomic():

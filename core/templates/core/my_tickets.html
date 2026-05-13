@@ -18,11 +18,11 @@
             <div class="bento-grid" style="grid-template-columns: repeat(2, 1fr); margin-bottom: 24px;">
                 <div class="bento-card stat-card">
                     <span class="stat-label">Total Tiket</span>
-                    <span class="stat-value">5</span>
+                    <span class="stat-value">{{ total_tickets }}</span>
                 </div>
                 <div class="bento-card stat-card">
                     <span class="stat-label">Event Berbeda</span>
-                    <span class="stat-value">3</span>
+                    <span class="stat-value">{{ tickets|length }}</span>
                 </div>
             </div>
 
@@ -32,31 +32,24 @@
                     <h2 class="card-title">Tiket Anda</h2>
                 </div>
                 <div class="ticket-grid" id="my-ticket-list">
-                    <!-- Sample Ticket Cards -->
+                    {% for ticket in tickets %}
                     <div class="ticket-card">
                         <div class="ticket-header">
-                            <span class="ticket-code">TKT-2026-0001</span>
-                            <span class="badge badge-primary">Aktif</span>
+                            <span class="ticket-code">{{ ticket.ticket_code }}</span>
+                            <span class="badge {% if ticket.payment_status == 'Lunas' %}badge-primary{% else %}badge-secondary{% endif %}">{{ ticket.payment_status }}</span>
                         </div>
                         <div class="ticket-body">
-                            <p class="ticket-event">Coldplay: Music of the Spheres</p>
-                            <p class="ticket-category">VVIP - Rp 2.500.000</p>
-                            <p class="ticket-seat">Seat: WVIP - Row A, No. 1</p>
-                            <p class="ticket-date">Tanggal: 15 Juni 2026</p>
+                            <p class="ticket-event">{{ ticket.event_title }}</p>
+                            <p class="ticket-category">{{ ticket.category_name }} - Rp {{ ticket.price|floatformat:0 }}</p>
+                            {% if ticket.section %}
+                            <p class="ticket-seat">Seat: {{ ticket.section }} - Row {{ ticket.row_number }}, No. {{ ticket.seat_number }}</p>
+                            {% endif %}
+                            <p class="ticket-date">Order: {{ ticket.order_date }}</p>
                         </div>
                     </div>
-                    <div class="ticket-card">
-                        <div class="ticket-header">
-                            <span class="ticket-code">TKT-2026-0002</span>
-                            <span class="badge badge-primary">Aktif</span>
-                        </div>
-                        <div class="ticket-body">
-                            <p class="ticket-event">Jisoo: Blinks Camp</p>
-                            <p class="ticket-category">VIP - Rp 1.500.000</p>
-                            <p class="ticket-seat">Seat: VIP - Row B, No. 5</p>
-                            <p class="ticket-date">Tanggal: 20 Juni 2026</p>
-                        </div>
-                    </div>
+                    {% empty %}
+                    <p style="grid-column: 1/-1; text-align: center; color: var(--text-secondary);">Anda belum memiliki tiket.</p>
+                    {% endfor %}
                 </div>
             </div>
         </div>
