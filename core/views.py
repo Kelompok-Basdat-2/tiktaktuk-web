@@ -27,6 +27,18 @@ def _redirect_dashboard(role: str):
     return redirect(f'/dashboard/{role}/')
 
 
+def _clean_db_error(error: Exception) -> str:
+    """Extract user-facing message from a PostgreSQL trigger/stored-proc error."""
+    msg = str(error)
+    for line in msg.split('\n'):
+        line = line.strip()
+        # PostgreSQL prepends 'ERROR:  ' — match anywhere 'Error:' appears
+        if 'Error:' in line:
+            idx = line.index('Error:')
+            return line[idx:]
+    return msg.split('\n')[0].strip()
+
+
 # ═══════════════════════════════════════════════════════════════════════════════
 # Feature 1: Navbar (handled in _sidebar.html via session context)
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -59,12 +71,9 @@ def register_view(request):
             messages.error(request, 'Pilih peran (role) terlebih dahulu.')
             return render(request, 'core/register.html', {})
 
-        # Validate username
+        # Validate username (trigger handles duplicate & special-char checks)
         if not username:
             messages.error(request, 'Username wajib diisi.')
-            return render(request, 'core/register.html', {})
-        if auth.get_user_by_username(username):
-            messages.error(request, 'Username sudah digunakan.')
             return render(request, 'core/register.html', {})
 
         # Validate password
@@ -105,7 +114,8 @@ def register_view(request):
             messages.success(request, 'Akun berhasil dibuat. Silakan login.')
             return redirect('core:login')
         except Exception as e:
-            messages.error(request, str(e))
+            # Trigger/stored-procedure errors surface via _clean_db_error
+            messages.error(request, _clean_db_error(e))
 
     return render(request, 'core/register.html', {})
 
