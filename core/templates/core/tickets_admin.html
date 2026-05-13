@@ -2,7 +2,7 @@
 
 {% block body %}
 <div class="layout">
-    {% include 'core/_sidebar.html' with role='admin' active='tickets' user_name='Reva Admin' user_role='Administrator' %}
+    {% include 'core/_sidebar.html' with role=role active='tickets' user_name=user_name user_role=user_role %}
     <main class="main-content">
         <header class="header">
             <div class="header-left">
@@ -66,39 +66,28 @@
                     <h2 class="card-title">Daftar Tiket</h2>
                 </div>
                 <div class="ticket-grid" id="ticket-list">
-                    <!-- Sample Ticket Cards -->
+                    {% for ticket in tickets %}
                     <div class="ticket-card">
                         <div class="ticket-header">
-                            <span class="ticket-code">TKT-2026-0001</span>
-                            <span class="badge badge-primary">Aktif</span>
+                            <span class="ticket-code">{{ ticket.ticket_code }}</span>
+                            <span class="badge {% if ticket.payment_status == 'Lunas' %}badge-primary{% else %}badge-secondary{% endif %}">{{ ticket.payment_status }}</span>
                         </div>
                         <div class="ticket-body">
-                            <p class="ticket-event">Coldplay: Music of the Spheres</p>
-                            <p class="ticket-category">VVIP - Rp 2.500.000</p>
-                            <p class="ticket-seat">Seat: WVIP - Row A, No. 1</p>
-                            <p class="ticket-customer">Pelanggan: Budi Santoso</p>
+                            <p class="ticket-event">{{ ticket.event_title }}</p>
+                            <p class="ticket-category">{{ ticket.category_name }} - Rp {{ ticket.price|floatformat:0 }}</p>
+                            {% if ticket.section %}
+                            <p class="ticket-seat">Seat: {{ ticket.section }} - Row {{ ticket.row_number }}, No. {{ ticket.seat_number }}</p>
+                            {% endif %}
+                            <p class="ticket-customer">Pelanggan: {{ ticket.customer_name }}</p>
                         </div>
                         <div class="ticket-actions">
-                            <button class="btn btn-secondary btn-sm" onclick="openUpdateModal('TKT-2026-0001')">Update</button>
-                            <button class="btn btn-danger btn-sm" onclick="openDeleteModal('TKT-2026-0001')">Hapus</button>
+                            <button class="btn btn-secondary btn-sm" onclick="openUpdateModal('{{ ticket.ticket_id }}', '{{ ticket.ticket_code }}')">Update</button>
+                            <button class="btn btn-danger btn-sm" onclick="openDeleteModal('{{ ticket.ticket_id }}', '{{ ticket.ticket_code }}')">Hapus</button>
                         </div>
                     </div>
-                    <div class="ticket-card">
-                        <div class="ticket-header">
-                            <span class="ticket-code">TKT-2026-0002</span>
-                            <span class="badge badge-secondary">Terpakai</span>
-                        </div>
-                        <div class="ticket-body">
-                            <p class="ticket-event">Jisoo: Blinks Camp</p>
-                            <p class="ticket-category">VIP - Rp 1.500.000</p>
-                            <p class="ticket-seat">Seat: VIP - Row B, No. 5</p>
-                            <p class="ticket-customer">Pelanggan: Siti Rahayu</p>
-                        </div>
-                        <div class="ticket-actions">
-                            <button class="btn btn-secondary btn-sm" onclick="openUpdateModal('TKT-2026-0002')">Update</button>
-                            <button class="btn btn-danger btn-sm" onclick="openDeleteModal('TKT-2026-0002')">Hapus</button>
-                        </div>
-                    </div>
+                    {% empty %}
+                    <p style="grid-column: 1/-1; text-align: center; color: var(--text-secondary);">Tidak ada tiket.</p>
+                    {% endfor %}
                 </div>
             </div>
         </div>
@@ -113,20 +102,20 @@
             <h3 class="modal-title">Tambah Tiket</h3>
             <button class="modal-close" onclick="closeCreateModal()">&times;</button>
         </div>
-        <form method="POST" action="/tickets/create/admin/">
+        <form method="POST" action="/tickets/create/">
             {% csrf_token %}
             <div class="form-group">
                 <label class="form-label required">Order</label>
-                <select class="form-input" id="create-order-select" name="order_id" required onchange="onCreateOrderChange()">
+                <select class="form-input" id="create-order-select" name="order_id" required>
                     <option value="">-- Pilih Order --</option>
-                    <option value="ord_001">ORD-2026-0001 - Budi Santoso - Coldplay Concert</option>
-                    <option value="ord_002">ORD-2026-0002 - Siti Rahayu - Jisoo Fanmeeting</option>
-                    <option value="ord_003">ORD-2026-0003 - Ahmad Fauzi - Dewa 19 Concert</option>
+                    {% for order in orders %}
+                    <option value="{{ order.order_id }}">{{ order.order_id }} — {{ order.customer_name }} — {{ order.payment_status }}</option>
+                    {% endfor %}
                 </select>
             </div>
             <div class="form-group">
                 <label class="form-label required">Kategori Tiket</label>
-                <select class="form-input" id="create-category-select" name="category_id" required onchange="onCreateCategoryChange()">
+                <select class="form-input" id="create-category-select" name="category_id" required>
                     <option value="">-- Pilih Kategori --</option>
                 </select>
             </div>
@@ -158,19 +147,12 @@
             <h3 class="modal-title">Update Tiket</h3>
             <button class="modal-close" onclick="closeUpdateModal()">&times;</button>
         </div>
-        <form method="POST" action="/tickets/update/">
+        <form method="POST" action="" id="update-form">
             {% csrf_token %}
             <input type="hidden" id="update-ticket-id" name="ticket_id">
             <div class="form-group">
                 <label class="form-label">Kode Tiket</label>
                 <input type="text" class="form-input" id="update-ticket-code" disabled>
-            </div>
-            <div class="form-group">
-                <label class="form-label">Status</label>
-                <select class="form-input" id="update-status" name="status">
-                    <option value="active">Aktif</option>
-                    <option value="used">Terpakai</option>
-                </select>
             </div>
             <div class="form-group" id="update-seat-group">
                 <label class="form-label">Kursi</label>
@@ -194,41 +176,20 @@
             <h3 class="modal-title">Konfirmasi Hapus Tiket</h3>
             <button class="modal-close" onclick="closeDeleteModal()">&times;</button>
         </div>
-        <p style="margin-bottom: 16px;">Apakah Anda yakin ingin menghapus tiket ini? Tindakan ini tidak dapat dibatalkan.</p>
-        <input type="hidden" id="delete-ticket-id">
-        <div class="modal-actions">
-            <button class="btn btn-secondary" onclick="closeDeleteModal()">Batal</button>
-            <button class="btn btn-danger" onclick="confirmDelete()">Hapus</button>
-        </div>
+        <form method="POST" action="" id="delete-form">
+            {% csrf_token %}
+            <p style="margin-bottom: 16px;">Apakah Anda yakin ingin menghapus tiket <strong id="delete-ticket-label"></strong>? Tindakan ini tidak dapat dibatalkan.</p>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeDeleteModal()">Batal</button>
+                <button type="submit" class="btn btn-danger">Hapus</button>
+            </div>
+        </form>
     </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-// Sample data for cascading dropdowns
-const categoryData = {
-    'ord_001': [
-        { id: 'cat_001', name: 'VVIP - Rp 2.500.000 - (5/10 terpakai)' },
-        { id: 'cat_002', name: 'VIP - Rp 1.500.000 - (8/15 terpakai)' },
-        { id: 'cat_003', name: 'Festival - Rp 750.000 - (12/20 terpakai)' }
-    ],
-    'ord_002': [
-        { id: 'cat_002', name: 'VIP - Rp 1.500.000 - (5/10 terpakai)' },
-        { id: 'cat_003', name: 'Festival - Rp 750.000 - (10/15 terpakai)' }
-    ],
-    'ord_003': [
-        { id: 'cat_001', name: 'VVIP - Rp 2.000.000 - (3/8 terpakai)' },
-        { id: 'cat_003', name: 'Festival - Rp 500.000 - (20/25 terpakai)' }
-    ]
-};
-
-const seatData = [
-    { id: 'seat_001', name: 'WVIP - Row A, No. 1' },
-    { id: 'seat_002', name: 'WVIP - Row A, No. 2' },
-    { id: 'seat_003', name: 'VIP - Row B, No. 1' }
-];
-
 function openCreateModal() {
     document.getElementById('create-modal').style.display = 'flex';
 }
@@ -237,49 +198,10 @@ function closeCreateModal() {
     document.getElementById('create-modal').style.display = 'none';
 }
 
-function onCreateOrderChange() {
-    const orderId = document.getElementById('create-order-select').value;
-    const categorySelect = document.getElementById('create-category-select');
-    const seatGroup = document.getElementById('create-seat-group');
-
-    categorySelect.innerHTML = '<option value="">-- Pilih Kategori --</option>';
-    seatGroup.style.display = 'none';
-
-    if (!orderId) return;
-
-    const categories = categoryData[orderId] || [];
-    categories.forEach(cat => {
-        const option = document.createElement('option');
-        option.value = cat.id;
-        option.textContent = cat.name;
-        categorySelect.appendChild(option);
-    });
-}
-
-function onCreateCategoryChange() {
-    const categoryId = document.getElementById('create-category-select').value;
-    const seatGroup = document.getElementById('create-seat-group');
-    const seatSelect = document.getElementById('create-seat-select');
-
-    if (!categoryId) {
-        seatGroup.style.display = 'none';
-        return;
-    }
-
-    // Show seat dropdown for reserved seating (simulated)
-    seatGroup.style.display = 'block';
-    seatSelect.innerHTML = '<option value="">-- Pilih Kursi --</option>';
-    seatData.forEach(seat => {
-        const option = document.createElement('option');
-        option.value = seat.id;
-        option.textContent = seat.name;
-        seatSelect.appendChild(option);
-    });
-}
-
-function openUpdateModal(ticketCode) {
-    document.getElementById('update-ticket-id').value = ticketCode;
+function openUpdateModal(ticketId, ticketCode) {
+    document.getElementById('update-ticket-id').value = ticketId;
     document.getElementById('update-ticket-code').value = ticketCode;
+    document.getElementById('update-form').action = '/tickets/' + ticketId + '/update/';
     document.getElementById('update-modal').style.display = 'flex';
 }
 
@@ -287,19 +209,14 @@ function closeUpdateModal() {
     document.getElementById('update-modal').style.display = 'none';
 }
 
-function openDeleteModal(ticketId) {
-    document.getElementById('delete-ticket-id').value = ticketId;
+function openDeleteModal(ticketId, ticketCode) {
+    document.getElementById('delete-ticket-label').textContent = ticketCode;
+    document.getElementById('delete-form').action = '/tickets/' + ticketId + '/delete/';
     document.getElementById('delete-modal').style.display = 'flex';
 }
 
 function closeDeleteModal() {
     document.getElementById('delete-modal').style.display = 'none';
-}
-
-function confirmDelete() {
-    const ticketId = document.getElementById('delete-ticket-id').value;
-    console.log('Deleting ticket:', ticketId);
-    closeDeleteModal();
 }
 </script>
 {% endblock %}

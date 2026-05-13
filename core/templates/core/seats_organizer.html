@@ -2,7 +2,7 @@
 
 {% block body %}
 <div class="layout">
-    {% include 'core/_sidebar.html' with role='organizer' active='seats' user_name='Reva Organizer' user_role='Organizer' %}
+    {% include 'core/_sidebar.html' with role=role active='seats' user_name=user_name user_role=user_role %}
     <main class="main-content">
         <header class="header">
             <div class="header-left">
@@ -169,12 +169,14 @@
             <h3 class="modal-title">Konfirmasi Hapus Kursi</h3>
             <button class="modal-close" onclick="closeDeleteModal()">&times;</button>
         </div>
-        <p style="margin-bottom: 16px;">Apakah Anda yakin ingin menghapus kursi ini?</p>
-        <input type="hidden" id="delete-seat-id">
-        <div class="modal-actions">
-            <button class="btn btn-secondary" onclick="closeDeleteModal()">Batal</button>
-            <button class="btn btn-danger" onclick="confirmDelete()">Hapus</button>
-        </div>
+        <form method="POST" action="" id="delete-form">
+            {% csrf_token %}
+            <p style="margin-bottom: 16px;">Apakah Anda yakin ingin menghapus kursi <strong id="delete-seat-label"></strong>?</p>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeDeleteModal()">Batal</button>
+                <button type="submit" class="btn btn-danger">Hapus</button>
+            </div>
+        </form>
     </div>
 </div>
 {% endblock %}
@@ -184,33 +186,23 @@
 function openCreateModal() {
     document.getElementById('create-modal').style.display = 'flex';
 }
-
 function closeCreateModal() {
     document.getElementById('create-modal').style.display = 'none';
 }
-
 function openEditModal(seatId) {
     document.getElementById('edit-seat-id').value = seatId;
     document.getElementById('edit-modal').style.display = 'flex';
 }
-
 function closeEditModal() {
     document.getElementById('edit-modal').style.display = 'none';
 }
-
-function openDeleteModal(seatId) {
-    document.getElementById('delete-seat-id').value = seatId;
+function openDeleteModal(seatId, label) {
+    document.getElementById('delete-seat-label').textContent = label;
+    document.getElementById('delete-form').action = '/seats/' + seatId + '/delete/';
     document.getElementById('delete-modal').style.display = 'flex';
 }
-
 function closeDeleteModal() {
     document.getElementById('delete-modal').style.display = 'none';
-}
-
-function confirmDelete() {
-    const seatId = document.getElementById('delete-seat-id').value;
-    console.log('Deleting seat:', seatId);
-    closeDeleteModal();
 }
 </script>
 {% endblock %}

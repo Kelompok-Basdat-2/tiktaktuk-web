@@ -5,6 +5,7 @@ from django.contrib import messages
 from django.db import transaction
 
 from . import auth
+from . import tickets as tkt
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -154,6 +155,8 @@ def login_view(request):
 
 
 def logout_view(request):
+    # Consume lingering messages before clearing session
+    list(messages.get_messages(request))
     request.session.flush()
     return redirect('core:login')
 
@@ -597,39 +600,184 @@ def ticket_category_list_customer(request):
 # Features 18-20: Ticket Management
 # =============================================================================
 
+def _ticket_role(request) -> str | None:
+    """Return role from session, or None if not logged in."""
+    user = _session_user(request)
+    if not user:
+        return None
+    return auth.get_primary_role(user['user_id'])
+
+
+def _ticket_context(request, role: str, active: str) -> dict:
+    user = _session_user(request)
+    ctx = {
+        'role': role,
+        'active': active,
+        'user_name': user['username'] if user else 'User',
+        'user_role': {'admin': 'Administrator', 'organizer': 'Organizer', 'customer': 'Customer'}.get(role, 'User'),
+    }
+    return ctx
+
+
 def tickets_admin(request):
-    """Admin ticket list page - all tickets system-wide."""
-    return render(request, 'core/tickets_admin.html', {})
+    role = _ticket_role(request)
+    if role != 'admin':
+        return redirect('core:login')
+
+    search = (request.GET.get('search') or '').strip()
+    event_id = (request.GET.get('event_id') or '').strip()
+
+    ticket_list = tkt.get_all_tickets(search=search, event_id=event_id)
+    events = tkt.get_events_for_dropdown()
+
+    ctx = _ticket_context(request, 'admin', 'tickets')
+    ctx.update({
+        'page_title': 'Manajemen Tiket',
+        'page_subtitle': 'Kelola semua tiket dalam sistem',
+        'tickets': ticket_list,
+        'events': events,
+        'total_tickets': len(ticket_list),
+        'search': search,
+        'selected_event': event_id,
+    })
+    return render(request, 'core/tickets_admin.html', ctx)
 
 
 def tickets_organizer(request):
-    """Organizer ticket list page - only their events."""
-    return render(request, 'core/tickets_organizer.html', {})
+    role = _ticket_role(request)
+    if role not in ('admin', 'organizer'):
+        return redirect('core:login')
+
+    user = _session_user(request)
+    search = (request.GET.get('search') or '').strip()
+    ticket_list = tkt.get_tickets_by_organizer(user['user_id'], search=search)
+
+    ctx = _ticket_context(request, role, 'tickets')
+    ctx.update({
+        'page_title': 'Manajemen Tiket',
+        'page_subtitle': 'Kelola tiket untuk event Anda',
+        'tickets': ticket_list,
+        'total_tickets': len(ticket_list),
+        'search': search,
+    })
+    return render(request, 'core/tickets_organizer.html', ctx)
 
 
 def my_tickets(request):
-    """Customer ticket list page."""
-    return render(request, 'core/my_tickets.html', {})
+    role = _ticket_role(request)
+    if role != 'customer':
+        return redirect('core:login')
+
+    user = _session_user(request)
+    search = (request.GET.get('search') or '').strip()
+    ticket_list = tkt.get_tickets_by_customer(user['user_id'], search=search)
+
+    ctx = _ticket_context(request, 'customer', 'my_tickets')
+    ctx.update({
+        'page_title': 'Tiket Saya',
+        'page_subtitle': 'Tiket yang Anda miliki',
+        'tickets': ticket_list,
+        'total_tickets': len(ticket_list),
+        'search': search,
+    })
+    return render(request, 'core/my_tickets.html', ctx)
 
 
-def ticket_create_admin(request):
-    """Create ticket - Admin only."""
-    return render(request, 'core/tickets_admin.html', {})
+def ticket_create(request):
+    """Create ticket — Admin or Organizer."""
+    role = _ticket_role(request)
+    if role not in ('admin', 'organizer'):
+        return redirect('core:login')
 
+    if request.method == 'POST':
+        order_id = (request.POST.get('order_id') or '').strip()
+        category_id = (request.POST.get('category_id') or '').strip()
+        seat_id = (request.POST.get('seat_id') or '').strip()
 
-def ticket_create_organizer(request):
-    """Create ticket - Organizer only."""
-    return render(request, 'core/tickets_organizer.html', {})
+        if not order_id or not category_id:
+            messages.error(request, 'Order dan Kategori Tiket wajib dipilih.')
+            return redirect('core:tickets_admin')
+
+        try:
+            with transaction.atomic():
+                ticket_id = tkt.create_ticket(order_id, category_id)
+                if seat_id:
+                    tkt.assign_seat_to_ticket(ticket_id, seat_id)
+            messages.success(request, 'Tiket berhasil dibuat.')
+        except Exception as e:
+            messages.error(request, _clean_db_error(e))
+
+        if role == 'admin':
+            return redirect('core:tickets_admin')
+        return redirect('core:tickets_organizer')
+
+    # GET — show create form context
+    orders = tkt.get_orders_for_dropdown()
+    events = tkt.get_events_for_dropdown()
+
+    ctx = _ticket_context(request, role, 'tickets')
+    ctx.update({
+        'page_title': 'Buat Tiket Baru',
+        'orders': orders,
+        'events': events,
+    })
+    template = 'core/tickets_admin.html' if role == 'admin' else 'core/tickets_organizer.html'
+    return render(request, template, ctx)
 
 
 def ticket_update(request, ticket_id):
-    """Update ticket - Admin, Organizer (filtered by backend)."""
-    return render(request, 'core/tickets_admin.html', {})
+    role = _ticket_role(request)
+    if role != 'admin':
+        return redirect('core:login')
+
+    ticket = tkt.get_ticket_by_id(ticket_id)
+    if not ticket:
+        messages.error(request, 'Tiket tidak ditemukan.')
+        return redirect('core:tickets_admin')
+
+    if request.method == 'POST':
+        seat_id = (request.POST.get('seat_id') or '').strip()
+        try:
+            with transaction.atomic():
+                tkt.update_ticket_seat(ticket_id, seat_id if seat_id else None)
+            messages.success(request, 'Tiket berhasil diperbarui.')
+        except Exception as e:
+            messages.error(request, _clean_db_error(e))
+        return redirect('core:tickets_admin')
+
+    # GET — show update form
+    event = tkt.get_event_for_ticket_category(ticket['tcategory_id'])
+    seats = tkt.get_seats_for_venue(event['venue_id']) if event else []
+    categories = tkt.get_categories_for_event(event['event_id']) if event else []
+
+    ctx = _ticket_context(request, 'admin', 'tickets')
+    ctx.update({
+        'page_title': 'Update Tiket',
+        'ticket': ticket,
+        'seats': seats,
+        'categories': categories,
+    })
+    return render(request, 'core/tickets_admin.html', ctx)
 
 
 def ticket_delete(request, ticket_id):
-    """Delete ticket - Admin, Organizer (filtered by backend)."""
-    return render(request, 'core/tickets_admin.html', {})
+    role = _ticket_role(request)
+    if role != 'admin':
+        return redirect('core:login')
+
+    if request.method == 'POST':
+        try:
+            with transaction.atomic():
+                tkt.delete_ticket(ticket_id)
+            messages.success(request, 'Tiket berhasil dihapus.')
+        except Exception as e:
+            messages.error(request, _clean_db_error(e))
+        return redirect('core:tickets_admin')
+
+    ticket = tkt.get_ticket_by_id(ticket_id)
+    ctx = _ticket_context(request, 'admin', 'tickets')
+    ctx['ticket'] = ticket
+    return render(request, 'core/tickets_admin.html', ctx)
 
 
 # =============================================================================
@@ -637,30 +785,118 @@ def ticket_delete(request, ticket_id):
 # =============================================================================
 
 def seats(request):
-    """Seat list page - unified, role determined by sidebar."""
-    return render(request, 'core/seats.html', {})
+    role = _ticket_role(request)
+    if not role:
+        return redirect('core:login')
 
+    user = _session_user(request)
+    if role == 'organizer':
+        seat_list = tkt.get_seats_by_organizer(user['user_id'])
+    else:
+        seat_list = tkt.get_all_seats()
 
-def seats_admin(request):
-    """Seat list page - Admin view (all venues)."""
-    return render(request, 'core/seats_admin.html', {})
+    total = len(seat_list)
+    occupied = sum(1 for s in seat_list if s.get('occupied'))
+    available = total - occupied
 
-
-def seats_organizer(request):
-    """Seat list page - Organizer view (their venues only)."""
-    return render(request, 'core/seats_organizer.html', {})
+    ctx = _ticket_context(request, role, 'seats')
+    ctx.update({
+        'page_title': 'Daftar Kursi',
+        'page_subtitle': 'Lihat kursi untuk setiap venue',
+        'seats': seat_list,
+        'total_seats': total,
+        'occupied_seats': occupied,
+        'available_seats': available,
+    })
+    return render(request, 'core/seats.html', ctx)
 
 
 def seat_create(request):
-    """Create seat - Admin, Organizer (filtered by backend)."""
-    return render(request, 'core/seats.html', {})
+    role = _ticket_role(request)
+    if role not in ('admin', 'organizer'):
+        return redirect('core:login')
+
+    if request.method == 'POST':
+        venue_id = (request.POST.get('venue_id') or '').strip()
+        section = (request.POST.get('section') or '').strip()
+        row_number = (request.POST.get('row_number') or '').strip()
+        seat_number = (request.POST.get('seat_number') or '').strip()
+
+        if not all([venue_id, section, row_number, seat_number]):
+            messages.error(request, 'Semua field wajib diisi.')
+            return redirect('core:seats')
+
+        try:
+            with transaction.atomic():
+                tkt.create_seat(section, seat_number, row_number, venue_id)
+            messages.success(request, 'Kursi berhasil ditambahkan.')
+        except Exception as e:
+            messages.error(request, _clean_db_error(e))
+        return redirect('core:seats')
+
+    venues = tkt.get_venues_for_dropdown()
+    ctx = _ticket_context(request, role, 'seats')
+    ctx['venues'] = venues
+    return render(request, 'core/seats.html', ctx)
 
 
 def seat_update(request, seat_id):
-    """Update seat - Admin, Organizer (filtered by backend)."""
-    return render(request, 'core/seats.html', {})
+    role = _ticket_role(request)
+    if role not in ('admin', 'organizer'):
+        return redirect('core:login')
+
+    seat = tkt.get_seat_by_id(seat_id)
+    if not seat:
+        messages.error(request, 'Kursi tidak ditemukan.')
+        return redirect('core:seats')
+
+    if request.method == 'POST':
+        venue_id = (request.POST.get('venue_id') or '').strip()
+        section = (request.POST.get('section') or '').strip()
+        row_number = (request.POST.get('row_number') or '').strip()
+        seat_number = (request.POST.get('seat_number') or '').strip()
+
+        if not all([venue_id, section, row_number, seat_number]):
+            messages.error(request, 'Semua field wajib diisi.')
+            return redirect('core:seats')
+
+        try:
+            with transaction.atomic():
+                tkt.update_seat(seat_id, section, seat_number, row_number, venue_id)
+            messages.success(request, 'Kursi berhasil diperbarui.')
+        except Exception as e:
+            messages.error(request, _clean_db_error(e))
+        return redirect('core:seats')
+
+    venues = tkt.get_venues_for_dropdown()
+    ctx = _ticket_context(request, role, 'seats')
+    ctx.update({'seat': seat, 'venues': venues})
+    return render(request, 'core/seats.html', ctx)
 
 
 def seat_delete(request, seat_id):
-    """Delete seat - Admin, Organizer (filtered by backend)."""
-    return render(request, 'core/seats.html', {})
+    role = _ticket_role(request)
+    if role not in ('admin', 'organizer'):
+        return redirect('core:login')
+
+    if tkt.is_seat_occupied(seat_id):
+        seat = tkt.get_seat_by_id(seat_id)
+        name = f'{seat["section"]} - Baris {seat["row_number"]} No. {seat["seat_number"]}' if seat else seat_id
+        messages.error(
+            request,
+            f'Kursi {name} tidak dapat dihapus karena sudah terisi.',
+        )
+        return redirect('core:seats')
+
+    if request.method == 'POST':
+        try:
+            with transaction.atomic():
+                tkt.delete_seat(seat_id)
+            messages.success(request, 'Kursi berhasil dihapus.')
+        except Exception as e:
+            messages.error(request, _clean_db_error(e))
+        return redirect('core:seats')
+
+    ctx = _ticket_context(request, role, 'seats')
+    ctx['seat'] = tkt.get_seat_by_id(seat_id)
+    return render(request, 'core/seats.html', ctx)

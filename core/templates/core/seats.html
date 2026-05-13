@@ -2,7 +2,7 @@
 
 {% block body %}
 <div class="layout">
-    {% include 'core/_sidebar.html' with role='admin' active='seats' user_name='Reva Admin' user_role='Administrator' %}
+    {% include 'core/_sidebar.html' with role=role active='seats' user_name=user_name user_role=user_role %}
     <main class="main-content">
         <header class="header">
             <div class="header-left">
@@ -15,15 +15,15 @@
             <div class="bento-grid" style="grid-template-columns: repeat(3, 1fr); margin-bottom: 24px;">
                 <div class="bento-card stat-card">
                     <span class="stat-label">Total Kursi</span>
-                    <span class="stat-value" id="total-seats">30</span>
+                    <span class="stat-value">{{ total_seats }}</span>
                 </div>
                 <div class="bento-card stat-card">
                     <span class="stat-label">Tersedia</span>
-                    <span class="stat-value" id="available-seats">20</span>
+                    <span class="stat-value">{{ available_seats }}</span>
                 </div>
                 <div class="bento-card stat-card">
                     <span class="stat-label">Terisi</span>
-                    <span class="stat-value" id="occupied-seats">10</span>
+                    <span class="stat-value">{{ occupied_seats }}</span>
                 </div>
             </div>
 
@@ -40,30 +40,37 @@
                             <th>Baris</th>
                             <th>No. Kursi</th>
                             <th>Status</th>
+                            {% if role == 'admin' or role == 'organizer' %}
+                            <th></th>
+                            {% endif %}
                         </tr>
                     </thead>
                     <tbody>
+                        {% for seat in seats %}
                         <tr>
-                            <td>Gelora Bung Karno</td>
-                            <td>WVIP</td>
-                            <td>A</td>
-                            <td>1</td>
-                            <td><span class="badge badge-success">Tersedia</span></td>
+                            <td>{{ seat.venue_name }}</td>
+                            <td>{{ seat.section }}</td>
+                            <td>{{ seat.row_number }}</td>
+                            <td>{{ seat.seat_number }}</td>
+                            <td>
+                                {% if seat.occupied %}
+                                <span class="badge badge-error">Terisi</span>
+                                {% else %}
+                                <span class="badge badge-success">Tersedia</span>
+                                {% endif %}
+                            </td>
+                            {% if role == 'admin' or role == 'organizer' %}
+                            <td class="actions-cell">
+                                <form method="POST" action="/seats/{{ seat.seat_id }}/delete/" style="display:inline;" onsubmit="return confirm('Hapus kursi {{ seat.section }} - Baris {{ seat.row_number }} No. {{ seat.seat_number }}?')">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn-outline-danger" {% if seat.occupied %}disabled title="Kursi sudah terisi"{% endif %}>Hapus</button>
+                                </form>
+                            </td>
+                            {% endif %}
                         </tr>
-                        <tr>
-                            <td>Gelora Bung Karno</td>
-                            <td>WVIP</td>
-                            <td>A</td>
-                            <td>2</td>
-                            <td><span class="badge badge-error">Terisi</span></td>
-                        </tr>
-                        <tr>
-                            <td>Jakarta Concert Hall</td>
-                            <td>VIP</td>
-                            <td>B</td>
-                            <td>1</td>
-                            <td><span class="badge badge-success">Tersedia</span></td>
-                        </tr>
+                        {% empty %}
+                        <tr><td colspan="{% if role == 'admin' or role == 'organizer' %}6{% else %}5{% endif %}" style="text-align:center;color:var(--text-secondary);">Tidak ada kursi.</td></tr>
+                        {% endfor %}
                     </tbody>
                 </table>
             </div>

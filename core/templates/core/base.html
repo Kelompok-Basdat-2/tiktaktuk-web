@@ -120,9 +120,19 @@
         .profile-value { font-size: 0.875rem; color: var(--text-primary); font-weight: 500; }
         .profile-actions { display: flex; gap: 12px; margin-top: 24px; }
         .form-input:disabled { background: var(--background); color: var(--text-secondary); cursor: not-allowed; }
+        @keyframes fadeOut { 0%,70% {opacity:1} 100% {opacity:0} }
         </style>
 </head>
 <body>
+    {% if messages %}
+    <div style="position:fixed;top:16px;right:16px;z-index:9999;max-width:400px;">
+        {% for message in messages %}
+        <div class="alert alert-{% if message.tags == 'error' %}error{% else %}success{% endif %}" style="margin-bottom:8px;animation:fadeOut 4s forwards;">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
     {% block body %}{% endblock %}
     {% block scripts %}{% endblock %}
 </body>
