@@ -2,41 +2,214 @@ from datetime import date
 
 from django.shortcuts import render, redirect
 from django.contrib import messages
+from django.db import transaction
 
+from . import auth
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Helpers
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def _session_user(request) -> dict | None:
+    """Return session user dict or None."""
+    user_id = request.session.get('user_id')
+    if not user_id:
+        return None
+    user = auth.get_user_by_id(user_id)
+    if not user:
+        request.session.flush()
+        return None
+    return user
+
+
+def _redirect_dashboard(role: str):
+    return redirect(f'/dashboard/{role}/')
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Feature 1: Navbar (handled in _sidebar.html via session context)
+# ═══════════════════════════════════════════════════════════════════════════════
 
 def landing_view(request):
-    """Landing page - frontend only."""
+    user = _session_user(request)
+    if user:
+        role = auth.get_primary_role(user['user_id'])
+        if role:
+            return _redirect_dashboard(role)
     return render(request, 'core/landing.html', {})
 
 
+# ═══════════════════════════════════════════════════════════════════════════════
+# Feature 2: C - Register
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def register_view(request):
+    if request.method == 'POST':
+        role = (request.POST.get('role') or '').strip()
+        username = (request.POST.get('username') or '').strip()
+        password = (request.POST.get('password') or '')
+        password2 = (request.POST.get('password2') or '')
+        fullname = (request.POST.get('fullname') or '').strip()
+        email = (request.POST.get('email') or '').strip()
+        phone = (request.POST.get('phone') or '').strip()
+
+        # Validate role
+        if role not in ('admin', 'organizer', 'customer'):
+            messages.error(request, 'Pilih peran (role) terlebih dahulu.')
+            return render(request, 'core/register.html', {})
+
+        # Validate username
+        if not username:
+            messages.error(request, 'Username wajib diisi.')
+            return render(request, 'core/register.html', {})
+        if auth.get_user_by_username(username):
+            messages.error(request, 'Username sudah digunakan.')
+            return render(request, 'core/register.html', {})
+
+        # Validate password
+        if len(password) < 8:
+            messages.error(request, 'Password minimal 8 karakter.')
+            return render(request, 'core/register.html', {})
+        if password != password2:
+            messages.error(request, 'Password dan konfirmasi tidak cocok.')
+            return render(request, 'core/register.html', {})
+
+        # Map role
+        role_name_map = {
+            'admin': 'administrator',
+            'organizer': 'organizer',
+            'customer': 'customer',
+        }
+        db_role = role_name_map[role]
+
+        try:
+            with transaction.atomic():
+                user_id = auth.create_user(username, password, db_role)
+                if not user_id:
+                    raise Exception('Gagal membuat akun.')
+
+                if role == 'organizer':
+                    if not fullname:
+                        raise Exception('Nama lengkap wajib diisi untuk Organizer.')
+                    if not email:
+                        raise Exception('Email wajib diisi untuk Organizer.')
+                    auth.create_organizer_profile(user_id, fullname, email, phone)
+                elif role == 'customer':
+                    if not fullname:
+                        raise Exception('Nama lengkap wajib diisi untuk Customer.')
+                    if not email:
+                        raise Exception('Email wajib diisi untuk Customer.')
+                    auth.create_customer_profile(user_id, fullname, phone)
+
+            messages.success(request, 'Akun berhasil dibuat. Silakan login.')
+            return redirect('core:login')
+        except Exception as e:
+            messages.error(request, str(e))
+
+    return render(request, 'core/register.html', {})
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Feature 3: R - Login & Logout
+# ═══════════════════════════════════════════════════════════════════════════════
+
 def login_view(request):
-    """Login page - frontend only, no backend logic."""
+    if request.method == 'POST':
+        username = (request.POST.get('username') or '').strip()
+        password = request.POST.get('password') or ''
+
+        user = auth.get_user_by_username(username)
+        if not user:
+            messages.error(request, 'Username tidak ditemukan.')
+            return render(request, 'core/login.html', {})
+
+        if not auth.verify_password(password, user['password']):
+            messages.error(request, 'Password salah.')
+            return render(request, 'core/login.html', {})
+
+        # Set session
+        request.session['user_id'] = user['user_id']
+        request.session['username'] = user['username']
+
+        role = auth.get_primary_role(user['user_id'])
+        if role:
+            return _redirect_dashboard(role)
+
+        messages.error(request, 'Akun tidak memiliki role.')
+        request.session.flush()
+        return render(request, 'core/login.html', {})
+
     return render(request, 'core/login.html', {})
 
 
 def logout_view(request):
-    """Logout - redirect to login page."""
-    return redirect('/login/')
+    request.session.flush()
+    return redirect('core:login')
 
 
-def register_view(request):
-    """Registration page - frontend only, no backend logic."""
-    return render(request, 'core/register.html', {})
+# ═══════════════════════════════════════════════════════════════════════════════
+# Feature 4: RU - Dashboard
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def _dashboard_context(request, role: str, profile: dict | None) -> dict:
+    """Build common dashboard template context."""
+    user = _session_user(request)
+    if not user:
+        return {}
+
+    display_name = ''
+    if profile:
+        display_name = profile.get('full_name') or profile.get('organizer_name') or user['username']
+
+    return {
+        'user': user,
+        'user_name': display_name or user['username'],
+        'user_role': {'admin': 'Administrator', 'organizer': 'Organizer', 'customer': 'Customer'}.get(role, 'User'),
+        'role': role,
+        'profile': profile,
+    }
 
 
 def dashboard_admin(request):
-    """Admin dashboard - frontend only."""
-    return render(request, 'core/dashboard_admin.html', {})
+    user = _session_user(request)
+    if not user:
+        return redirect('core:login')
+    role = auth.get_primary_role(user['user_id'])
+    if role != 'admin':
+        return _redirect_dashboard(role) if role else redirect('core:login')
+
+    ctx = _dashboard_context(request, 'admin', None)
+    ctx['active'] = 'dashboard'
+    return render(request, 'core/dashboard_admin.html', ctx)
 
 
 def dashboard_organizer(request):
-    """Organizer dashboard - frontend only."""
-    return render(request, 'core/dashboard_organizer.html', {})
+    user = _session_user(request)
+    if not user:
+        return redirect('core:login')
+    role = auth.get_primary_role(user['user_id'])
+    if role != 'organizer':
+        return _redirect_dashboard(role) if role else redirect('core:login')
+
+    profile = auth.get_organizer_profile(user['user_id'])
+    ctx = _dashboard_context(request, 'organizer', profile)
+    ctx['active'] = 'dashboard'
+    return render(request, 'core/dashboard_organizer.html', ctx)
 
 
 def dashboard_customer(request):
-    """Customer dashboard - frontend only."""
-    return render(request, 'core/dashboard_customer.html', {})
+    user = _session_user(request)
+    if not user:
+        return redirect('core:login')
+    role = auth.get_primary_role(user['user_id'])
+    if role != 'customer':
+        return _redirect_dashboard(role) if role else redirect('core:login')
+
+    profile = auth.get_customer_profile(user['user_id'])
+    ctx = _dashboard_context(request, 'customer', profile)
+    ctx['active'] = 'dashboard'
+    return render(request, 'core/dashboard_customer.html', ctx)
 
 
 def order(request):

@@ -185,26 +185,30 @@ INSERT INTO ROLE (role_id, role_name) VALUES
 
 -- ============================================================
 -- DUMMY DATA: USER_ACCOUNT (18 records - exceeding 12)
+-- PBKDF2-SHA256 hashed passwords (Django compatible):
+--   Admins (u-001..003):    admin123
+--   Organizers (u-004..007, u-013): organizer123
+--   Customers (u-008..018): customer123
 -- ============================================================
 INSERT INTO USER_ACCOUNT (user_id, username, password) VALUES
-('u-001', 'admin_reva', 'hashed_password_123'),
-('u-002', 'admin_andi', 'hashed_password_456'),
-('u-003', 'admin_budi', 'hashed_password_789'),
-('u-004', 'org_soundfest', 'hashed_password_abc'),
-('u-005', 'org_techindo', 'hashed_password_def'),
-('u-006', 'org_comedyclub', 'hashed_password_ghi'),
-('u-007', 'org_festpro', 'hashed_password_jkl'),
-('u-008', 'cust_budi', 'hashed_password_mno'),
-('u-009', 'cust_siti', 'hashed_password_pqr'),
-('u-010', 'cust_rina', 'hashed_password_stu'),
-('u-011', 'cust_joko', 'hashed_password_vwx'),
-('u-012', 'cust_dewi', 'hashed_password_yz1'),
-('u-013', 'org_musicfest', 'hashed_password_abc2'),
-('u-014', 'cust_ange', 'hashed_password_abc3'),
-('u-015', 'cust_kevin', 'hashed_password_abc4'),
-('u-016', 'cust_lina', 'hashed_password_abc5'),
-('u-017', 'cust_michael', 'hashed_password_abc6'),
-('u-018', 'cust_nadia', 'hashed_password_abc7');
+('u-001', 'admin_reva', 'pbkdf2_sha256$1200000$B1MxL1PvOBoISgquIeps9A$g4Ri80C7pnSCLY1iz2wMS8jbH8slskrXFxrg7459lCo='),
+('u-002', 'admin_andi', 'pbkdf2_sha256$1200000$B1MxL1PvOBoISgquIeps9A$g4Ri80C7pnSCLY1iz2wMS8jbH8slskrXFxrg7459lCo='),
+('u-003', 'admin_budi', 'pbkdf2_sha256$1200000$B1MxL1PvOBoISgquIeps9A$g4Ri80C7pnSCLY1iz2wMS8jbH8slskrXFxrg7459lCo='),
+('u-004', 'org_soundfest', 'pbkdf2_sha256$1200000$z12GqhNwfw7kY93hbpWfne$73Tn5Lme49h2UAUVw6uK1GtFn7C+TpVnFghLsp4Akwk='),
+('u-005', 'org_techindo', 'pbkdf2_sha256$1200000$z12GqhNwfw7kY93hbpWfne$73Tn5Lme49h2UAUVw6uK1GtFn7C+TpVnFghLsp4Akwk='),
+('u-006', 'org_comedyclub', 'pbkdf2_sha256$1200000$z12GqhNwfw7kY93hbpWfne$73Tn5Lme49h2UAUVw6uK1GtFn7C+TpVnFghLsp4Akwk='),
+('u-007', 'org_festpro', 'pbkdf2_sha256$1200000$z12GqhNwfw7kY93hbpWfne$73Tn5Lme49h2UAUVw6uK1GtFn7C+TpVnFghLsp4Akwk='),
+('u-008', 'cust_budi', 'pbkdf2_sha256$1200000$dHgaLl43Xozk56eMBp16JS$tcCXA9uOhOrwJG+X0ausY/iajrHgWHcBASDxDU4AvZU='),
+('u-009', 'cust_siti', 'pbkdf2_sha256$1200000$dHgaLl43Xozk56eMBp16JS$tcCXA9uOhOrwJG+X0ausY/iajrHgWHcBASDxDU4AvZU='),
+('u-010', 'cust_rina', 'pbkdf2_sha256$1200000$dHgaLl43Xozk56eMBp16JS$tcCXA9uOhOrwJG+X0ausY/iajrHgWHcBASDxDU4AvZU='),
+('u-011', 'cust_joko', 'pbkdf2_sha256$1200000$dHgaLl43Xozk56eMBp16JS$tcCXA9uOhOrwJG+X0ausY/iajrHgWHcBASDxDU4AvZU='),
+('u-012', 'cust_dewi', 'pbkdf2_sha256$1200000$dHgaLl43Xozk56eMBp16JS$tcCXA9uOhOrwJG+X0ausY/iajrHgWHcBASDxDU4AvZU='),
+('u-013', 'org_musicfest', 'pbkdf2_sha256$1200000$z12GqhNwfw7kY93hbpWfne$73Tn5Lme49h2UAUVw6uK1GtFn7C+TpVnFghLsp4Akwk='),
+('u-014', 'cust_ange', 'pbkdf2_sha256$1200000$dHgaLl43Xozk56eMBp16JS$tcCXA9uOhOrwJG+X0ausY/iajrHgWHcBASDxDU4AvZU='),
+('u-015', 'cust_kevin', 'pbkdf2_sha256$1200000$dHgaLl43Xozk56eMBp16JS$tcCXA9uOhOrwJG+X0ausY/iajrHgWHcBASDxDU4AvZU='),
+('u-016', 'cust_lina', 'pbkdf2_sha256$1200000$dHgaLl43Xozk56eMBp16JS$tcCXA9uOhOrwJG+X0ausY/iajrHgWHcBASDxDU4AvZU='),
+('u-017', 'cust_michael', 'pbkdf2_sha256$1200000$dHgaLl43Xozk56eMBp16JS$tcCXA9uOhOrwJG+X0ausY/iajrHgWHcBASDxDU4AvZU='),
+('u-018', 'cust_nadia', 'pbkdf2_sha256$1200000$dHgaLl43Xozk56eMBp16JS$tcCXA9uOhOrwJG+X0ausY/iajrHgWHcBASDxDU4AvZU=');
 
 -- ============================================================
 -- DUMMY DATA: ACCOUNT_ROLE (21 records - exceeding 15)

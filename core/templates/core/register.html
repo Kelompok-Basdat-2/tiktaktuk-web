@@ -456,17 +456,23 @@ function showForm(role) {
     const radio = document.querySelector('input[name="role"][value="' + role + '"]');
     if (radio) radio.checked = true;
 
-    // Hide all forms
-    document.querySelectorAll('.role-form').forEach(f => f.style.display = 'none');
+    // Hide all forms AND disable their inputs (so they aren't submitted)
+    document.querySelectorAll('.role-form').forEach(f => {
+        f.style.display = 'none';
+        f.querySelectorAll('input').forEach(i => i.disabled = true);
+    });
 
-    // Show selected form
+    // Show selected form and enable its inputs
+    const activeForm = document.getElementById('form-' + role);
+    activeForm.style.display = 'block';
+    activeForm.querySelectorAll('input').forEach(i => i.disabled = false);
+
     const titles = {
         'admin': 'Registrasi Admin',
         'organizer': 'Registrasi Organizer',
         'customer': 'Registrasi Customer'
     };
     document.getElementById('form-title').textContent = titles[role];
-    document.getElementById('form-' + role).style.display = 'block';
 }
 
 function showRoleSelection() {

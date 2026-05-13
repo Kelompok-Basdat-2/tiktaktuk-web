@@ -52,14 +52,9 @@ Sidebar template - include with:
             <span class="user-name">{{ user_name|default:'User' }}</span>
             <span class="user-role">{{ user_role|default:role|title }}</span>
         </div>
-        <div class="role-switcher">
-            <span class="role-label">Role (Frontend Testing):</span>
-            <div class="role-buttons">
-                <a href="/dashboard/admin/" class="role-btn{% if role == 'admin' %} active{% endif %}">Admin</a>
-                <a href="/dashboard/organizer/" class="role-btn{% if role == 'organizer' %} active{% endif %}">Org</a>
-                <a href="/dashboard/customer/" class="role-btn{% if role == 'customer' %} active{% endif %}">Cust</a>
-            </div>
-        </div>
-        <a href="/login/" class="sidebar-item">Logout</a>
+        <form method="post" action="{% url 'core:logout' %}" style="padding: 0 20px 8px;">
+            {% csrf_token %}
+            <button type="submit" class="sidebar-item" style="width:100%;text-align:left;background:none;border:none;cursor:pointer;font-family:inherit;font-size:0.875rem;">Logout</button>
+        </form>
     </div>
 </aside>

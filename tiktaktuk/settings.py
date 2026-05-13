@@ -76,9 +76,6 @@ WSGI_APPLICATION = 'tiktaktuk.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-# Database
-# https://docs.djangoproject.com/en/6.0/ref/settings/#databases
-
 # --- PostgreSQL ---
 DATABASES = {
     'default': {
@@ -116,6 +113,9 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
+
+# Use signed cookies for sessions (no database table needed — raw SQL project)
+SESSION_ENGINE = 'django.contrib.sessions.backends.signed_cookies'
 
 LANGUAGE_CODE = 'en-us'
 
