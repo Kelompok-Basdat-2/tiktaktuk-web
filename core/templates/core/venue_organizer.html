@@ -1,0 +1,445 @@
+{% extends 'core/base.html' %}
+
+{% block body %}
+<div class="layout">
+    {% include 'core/_sidebar.html' with role=role active=active user_name=user_name user_role=user_role %}
+    <main class="main-content">
+        <header class="header">
+            <div class="header-left">
+                <h1 class="header-title">Venue Saya</h1>
+                <p class="header-subtitle">Kelola venue milik organizer</p>
+            </div>
+            <div class="header-right header-actions">
+                <form class="header-search" method="get">
+                    <input type="text" class="form-input" name="search" value="{{ search }}" placeholder="Cari venue saya..." style="width: 240px; padding-left: 2.5rem;">
+                </form>
+                <button class="btn btn-primary" type="button" data-modal-open="modal-venue-create-org">Ajukan Venue</button>
+            </div>
+        </header>
+        <div class="page-content">
+            <div class="bento-grid">
+                <div class="bento-card stat-card">
+                    <span class="stat-label">Total Venue</span>
+                    <span class="stat-value">{{ stats.total_venues }}</span>
+                    <span class="stat-change positive">Total data</span>
+                </div>
+                <div class="bento-card stat-card">
+                    <span class="stat-label">Disetujui</span>
+                    <span class="stat-value">{{ stats.approved }}</span>
+                    <span class="stat-change positive">Aktif</span>
+                </div>
+                <div class="bento-card stat-card">
+                    <span class="stat-label">Menunggu</span>
+                    <span class="stat-value">{{ stats.pending }}</span>
+                    <span class="stat-change">Dalam review</span>
+                </div>
+                <div class="bento-card stat-card">
+                    <span class="stat-label">Kota Terjangkau</span>
+                    <span class="stat-value">{{ stats.city_count }}</span>
+                    <span class="stat-change positive">Tersedia</span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-3" style="gap: 24px;">
+                <div class="card" style="grid-column: span 2;">
+                    <div class="card-header">
+                        <h2 class="card-title">Daftar Venue</h2>
+                        <div class="table-actions">
+                            <button class="btn btn-outline btn-sm">Filter</button>
+                            <button class="btn btn-outline btn-sm">Lihat Draft</button>
+                        </div>
+                    </div>
+                    <div class="table-toolbar">
+                        <div class="filter-group">
+                            <span class="filter-label">Status</span>
+                            <select class="form-input">
+                                <option>Semua status</option>
+                                <option>Aktif</option>
+                                <option>Menunggu</option>
+                                <option>Draft</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <span class="filter-label">Kota</span>
+                            <select class="form-input">
+                                <option>Semua kota</option>
+                                <option>Jakarta</option>
+                                <option>Bandung</option>
+                                <option>Surabaya</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-secondary btn-sm">Reset</button>
+                    </div>
+                    <div class="table-wrap">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Nama</th>
+                                    <th>Kota</th>
+                                    <th>Kapasitas</th>
+                                    <th>Status</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if venues %}
+                                    {% for venue in venues %}
+                                    <tr>
+                                        <td>
+                                            <div class="table-title">{{ venue.venue_name }}</div>
+                                            <div class="table-subtitle">{{ venue.venue_id }}</div>
+                                        </td>
+                                        <td>{{ venue.city }}</td>
+                                        <td>{{ venue.capacity }}</td>
+                                        <td><span class="badge {{ venue.status_class }}">{{ venue.status_label }}</span></td>
+                                        <td>
+                                            <div class="table-actions">
+                                                <button class="btn btn-outline btn-sm" type="button"
+                                                    data-modal-open="modal-venue-edit-org"
+                                                    data-venue-id="{{ venue.venue_id }}"
+                                                    data-venue-name="{{ venue.venue_name }}"
+                                                    data-venue-city="{{ venue.city }}"
+                                                    data-venue-address="{{ venue.address }}"
+                                                    data-venue-capacity="{{ venue.capacity }}">
+                                                    Edit
+                                                </button>
+                                                <button class="btn btn-danger btn-sm" type="button"
+                                                    data-modal-open="modal-venue-delete-org"
+                                                    data-venue-id="{{ venue.venue_id }}"
+                                                    data-venue-name="{{ venue.venue_name }}">
+                                                    Hapus
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="5" class="table-subtitle">Belum ada venue.</td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Aksi Cepat</h2>
+                    </div>
+                    <div class="action-list">
+                        <button class="btn btn-secondary" type="button" data-modal-open="modal-venue-create-org">Ajukan Venue Baru</button>
+                        <button class="btn btn-secondary">Tambah Foto Venue</button>
+                        <button class="btn btn-secondary">Atur Kursi</button>
+                        <button class="btn btn-secondary">Lihat Status Review</button>
+                    </div>
+                    <div class="section-divider"></div>
+                    <div class="note-list">
+                        <div class="note-item">Pastikan kapasitas dan alamat sesuai dokumen resmi.</div>
+                        <div class="note-item">Venue draft tidak tampil di halaman customer.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<div class="modal is-hidden" aria-hidden="true" id="modal-venue-create-org">
+    <div class="modal-overlay" data-modal-close></div>
+    <div class="modal-card modal-wide">
+        <div class="modal-header">
+            <h3 class="modal-title">Ajukan Venue</h3>
+            <button class="modal-close" type="button" data-modal-close>&times;</button>
+        </div>
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="create">
+            <div class="form-group">
+                <label class="form-label required">Nama Venue</label>
+                <input class="form-input" type="text" name="venue_name" placeholder="Contoh: Bandung Convention Hall">
+            </div>
+            <div class="form-group">
+                <label class="form-label required">Kota</label>
+                <input class="form-input" type="text" name="city" placeholder="Contoh: Bandung">
+            </div>
+            <div class="form-group">
+                <label class="form-label required">Alamat</label>
+                <input class="form-input" type="text" name="address" placeholder="Contoh: Jl. Asia Afrika No. 90">
+            </div>
+            <div class="form-group">
+                <label class="form-label required">Kapasitas</label>
+                <input class="form-input" type="number" name="capacity" placeholder="Contoh: 3000">
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" type="button" data-modal-close>Batal</button>
+                <button class="btn btn-primary" type="submit">Kirim Pengajuan</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal is-hidden" aria-hidden="true" id="modal-venue-edit-org">
+    <div class="modal-overlay" data-modal-close></div>
+    <div class="modal-card modal-wide">
+        <div class="modal-header">
+            <h3 class="modal-title">Edit Venue</h3>
+            <button class="modal-close" type="button" data-modal-close>&times;</button>
+        </div>
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="update">
+            <input type="hidden" name="venue_id" id="venue-edit-id-org">
+            <div class="form-group">
+                <label class="form-label required">Nama Venue</label>
+                <input class="form-input" type="text" name="venue_name" id="venue-edit-name-org" value="">
+            </div>
+            <div class="form-group">
+                <label class="form-label required">Kota</label>
+                <input class="form-input" type="text" name="city" id="venue-edit-city-org" value="">
+            </div>
+            <div class="form-group">
+                <label class="form-label required">Alamat</label>
+                <input class="form-input" type="text" name="address" id="venue-edit-address-org" value="">
+            </div>
+            <div class="form-group">
+                <label class="form-label required">Kapasitas</label>
+                <input class="form-input" type="number" name="capacity" id="venue-edit-capacity-org" value="">
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" type="button" data-modal-close>Batal</button>
+                <button class="btn btn-primary" type="submit">Simpan Perubahan</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal is-hidden" aria-hidden="true" id="modal-venue-delete-org">
+    <div class="modal-overlay" data-modal-close></div>
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3 class="modal-title">Hapus Venue</h3>
+            <button class="modal-close" type="button" data-modal-close>&times;</button>
+        </div>
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="delete">
+            <input type="hidden" name="venue_id" id="venue-delete-id-org">
+            <p>Venue <strong id="venue-delete-name-org">ini</strong> akan dihapus dari daftar organizer.</p>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" type="button" data-modal-close>Batal</button>
+                <button class="btn btn-danger" type="submit">Hapus Venue</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(() => {
+    const openButtons = document.querySelectorAll('[data-modal-open]');
+    const closeButtons = document.querySelectorAll('[data-modal-close]');
+
+    const openModal = (id) => {
+        const modal = document.getElementById(id);
+        if (!modal) {
+            return;
+        }
+        modal.classList.remove('is-hidden');
+        modal.setAttribute('aria-hidden', 'false');
+    };
+
+    const closeModal = (modal) => {
+        if (!modal) {
+            return;
+        }
+        modal.classList.add('is-hidden');
+        modal.setAttribute('aria-hidden', 'true');
+    };
+
+    openButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+            const modalId = button.getAttribute('data-modal-open');
+            openModal(modalId);
+
+            if (modalId === 'modal-venue-edit-org') {
+                const venueId = button.getAttribute('data-venue-id') || '';
+                const venueName = button.getAttribute('data-venue-name') || '';
+                const venueCity = button.getAttribute('data-venue-city') || '';
+                const venueAddress = button.getAttribute('data-venue-address') || '';
+                const venueCapacity = button.getAttribute('data-venue-capacity') || '';
+
+                const idInput = document.getElementById('venue-edit-id-org');
+                const nameInput = document.getElementById('venue-edit-name-org');
+                const cityInput = document.getElementById('venue-edit-city-org');
+                const addressInput = document.getElementById('venue-edit-address-org');
+                const capacityInput = document.getElementById('venue-edit-capacity-org');
+
+                if (idInput) idInput.value = venueId;
+                if (nameInput) nameInput.value = venueName;
+                if (cityInput) cityInput.value = venueCity;
+                if (addressInput) addressInput.value = venueAddress;
+                if (capacityInput) capacityInput.value = venueCapacity;
+            }
+
+            if (modalId === 'modal-venue-delete-org') {
+                const venueId = button.getAttribute('data-venue-id') || '';
+                const venueName = button.getAttribute('data-venue-name') || 'ini';
+                const deleteId = document.getElementById('venue-delete-id-org');
+                const deleteName = document.getElementById('venue-delete-name-org');
+
+                if (deleteId) deleteId.value = venueId;
+                if (deleteName) deleteName.textContent = venueName;
+            }
+        });
+    });
+
+    closeButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+            closeModal(button.closest('.modal'));
+        });
+    });
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key !== 'Escape') {
+            return;
+        }
+        document.querySelectorAll('.modal:not(.is-hidden)').forEach(closeModal);
+    });
+})();
+</script>
+{% endblock %}
+
+{% block style %}
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .table-toolbar {
+            display: flex;
+            align-items: flex-end;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            min-width: 160px;
+        }
+
+        .filter-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .table-wrap {
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: auto;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+        }
+
+        .data-table th {
+            text-align: left;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-secondary);
+            background: var(--background);
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .data-table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .data-table tbody tr:hover {
+            background: var(--background);
+        }
+
+        .table-title {
+            font-weight: 600;
+        }
+
+        .table-subtitle {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+
+        .badge-success {
+            background: #ECFDF3;
+            color: #027A48;
+        }
+
+        .badge-warning {
+            background: #FFF7ED;
+            color: #C2410C;
+        }
+
+        .badge-muted {
+            background: #F3F4F6;
+            color: #6B7280;
+        }
+
+        .note-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .note-item {
+            padding: 12px;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            background: var(--background);
+            font-size: 0.875rem;
+        }
+
+        .section-divider {
+            border-top: 1px solid var(--border);
+            margin: 16px 0;
+        }
+
+        .modal.is-hidden {
+            display: none;
+        }
+
+        .modal-wide {
+            max-width: 560px;
+        }
+
+        @media (max-width: 1024px) {
+            .header-actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .bento-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .grid-cols-3 {
+                grid-template-columns: 1fr;
+            }
+
+            .table-actions {
+                flex-wrap: wrap;
+            }
+        }
+{% endblock %}

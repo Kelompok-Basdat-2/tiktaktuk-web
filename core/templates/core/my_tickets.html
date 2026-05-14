@@ -1,0 +1,112 @@
+{% extends 'core/base.html' %}
+
+{% block body %}
+<div class="layout">
+    {% include 'core/_sidebar.html' with role=role active='my_tickets' user_name=user_name user_role=user_role %}
+    <main class="main-content">
+        <header class="header">
+            <div class="header-left">
+                <h1 class="header-title">Tiket Saya</h1>
+                <p class="header-subtitle">Kelola tiketevent Anda</p>
+            </div>
+            <div class="header-right">
+                <input type="text" class="form-input" placeholder="Cari tiket..." style="width: 280px;">
+            </div>
+        </header>
+        <div class="page-content">
+            <!-- Stats -->
+            <div class="bento-grid" style="grid-template-columns: repeat(2, 1fr); margin-bottom: 24px;">
+                <div class="bento-card stat-card">
+                    <span class="stat-label">Total Tiket</span>
+                    <span class="stat-value">{{ total_tickets }}</span>
+                </div>
+                <div class="bento-card stat-card">
+                    <span class="stat-label">Event Berbeda</span>
+                    <span class="stat-value">{{ tickets|length }}</span>
+                </div>
+            </div>
+
+            <!-- My Tickets -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Tiket Anda</h2>
+                </div>
+                <div class="ticket-grid" id="my-ticket-list">
+                    {% for ticket in tickets %}
+                    <div class="ticket-card">
+                        <div class="ticket-header">
+                            <span class="ticket-code">{{ ticket.ticket_code }}</span>
+                            <span class="badge {% if ticket.payment_status == 'Lunas' %}badge-primary{% else %}badge-secondary{% endif %}">{{ ticket.payment_status }}</span>
+                        </div>
+                        <div class="ticket-body">
+                            <p class="ticket-event">{{ ticket.event_title }}</p>
+                            <p class="ticket-category">{{ ticket.category_name }} - Rp {{ ticket.price|floatformat:0 }}</p>
+                            {% if ticket.section %}
+                            <p class="ticket-seat">Seat: {{ ticket.section }} - Row {{ ticket.row_number }}, No. {{ ticket.seat_number }}</p>
+                            {% endif %}
+                            <p class="ticket-date">Order: {{ ticket.order_date }}</p>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p style="grid-column: 1/-1; text-align: center; color: var(--text-secondary);">Anda belum memiliki tiket.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+{% endblock %}
+
+{% block style %}
+.ticket-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px;
+}
+
+.ticket-card {
+    background: var(--background);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+}
+
+.ticket-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.ticket-code {
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+.ticket-body {
+    margin-bottom: 12px;
+}
+
+.ticket-body p {
+    font-size: 0.875rem;
+    margin-bottom: 4px;
+}
+
+.ticket-event {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.ticket-category {
+    color: var(--text-secondary);
+}
+
+.ticket-seat {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+}
+
+.ticket-date {
+    color: var(--text-secondary);
+}
+{% endblock %}

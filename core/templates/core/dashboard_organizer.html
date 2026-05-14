@@ -2,7 +2,7 @@
 
 {% block body %}
 <div class="layout">
-    {% include 'core/_sidebar.html' with role='organizer' active='dashboard' user_name='SoundFest Indonesia' user_role='Organizer' %}
+    {% include 'core/_sidebar.html' with role=role active='dashboard' user_name=user_name user_role=user_role %}
     <main class="main-content">
         <header class="header">
             <div class="header-left">
@@ -92,7 +92,7 @@
                         <button class="btn btn-secondary">+ Create Event</button>
                         <button class="btn btn-secondary">+ Add Venue</button>
                         <button class="btn btn-secondary">+ Add Artist</button>
-                        <button class="btn btn-secondary">+ Create Promo</button>
+                        <a href="/promotion?role=organizer" class="btn btn-secondary">+ Create Promo</a>
                     </div>
                 </div>
             </div>

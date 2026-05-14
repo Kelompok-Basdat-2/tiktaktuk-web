@@ -1,0 +1,468 @@
+{% extends 'core/base.html' %}
+
+{% block body %}
+<div class="layout">
+    {% include 'core/_sidebar.html' with role=role active=active user_name=user_name user_role=user_role %}
+    <main class="main-content">
+        <header class="header">
+            <div class="header-left">
+                <h1 class="header-title">Manajemen Event</h1>
+                <p class="header-subtitle">Buat dan perbarui event lintas organizer</p>
+            </div>
+            <div class="header-right header-actions">
+                <form class="header-search" method="get">
+                    <input type="text" class="form-input" name="search" value="{{ search }}" placeholder="Cari event..." style="width: 240px; padding-left: 2.5rem;">
+                </form>
+                <button class="btn btn-primary" type="button" data-modal-open="modal-event-create">Buat Event</button>
+            </div>
+        </header>
+        <div class="page-content">
+            <div class="bento-grid">
+                <div class="bento-card stat-card">
+                    <span class="stat-label">Total Event</span>
+                    <span class="stat-value">{{ stats.total_events }}</span>
+                    <span class="stat-change positive">Total data</span>
+                </div>
+                <div class="bento-card stat-card">
+                    <span class="stat-label">Event Aktif</span>
+                    <span class="stat-value">{{ stats.active_events }}</span>
+                    <span class="stat-change positive">Berjalan</span>
+                </div>
+                <div class="bento-card stat-card">
+                    <span class="stat-label">Draft</span>
+                    <span class="stat-value">{{ stats.draft_events }}</span>
+                    <span class="stat-change">Butuh review</span>
+                </div>
+                <div class="bento-card stat-card">
+                    <span class="stat-label">Jadwal Padat</span>
+                    <span class="stat-value">{{ stats.busy_week }}</span>
+                    <span class="stat-change positive">Minggu ini</span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-3" style="gap: 24px;">
+                <div class="card" style="grid-column: span 2;">
+                    <div class="card-header">
+                        <h2 class="card-title">Daftar Event</h2>
+                        <div class="table-actions">
+                            <button class="btn btn-outline btn-sm">Filter</button>
+                            <button class="btn btn-outline btn-sm">Export</button>
+                        </div>
+                    </div>
+                    <div class="table-toolbar">
+                        <div class="filter-group">
+                            <span class="filter-label">Status</span>
+                            <select class="form-input">
+                                <option>Semua status</option>
+                                <option>Aktif</option>
+                                <option>Draft</option>
+                                <option>Berjalan</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <span class="filter-label">Organizer</span>
+                            <select class="form-input">
+                                <option>Semua organizer</option>
+                                <option>SoundFest Indonesia</option>
+                                <option>TechIndo Events</option>
+                                <option>Comedy Club</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <span class="filter-label">Venue</span>
+                            <select class="form-input">
+                                <option>Semua venue</option>
+                                <option>Jakarta Convention Center</option>
+                                <option>Bandung Techno Park</option>
+                                <option>Surabaya Grand Ballroom</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-secondary btn-sm">Reset</button>
+                    </div>
+                    <div class="table-wrap">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Event</th>
+                                    <th>Venue</th>
+                                    <th>Organizer</th>
+                                    <th>Tanggal</th>
+                                    <th>Status</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if events %}
+                                    {% for event in events %}
+                                    <tr>
+                                        <td>{{ event.event_id }}</td>
+                                        <td>
+                                            <div class="table-title">{{ event.event_title }}</div>
+                                            <div class="table-subtitle">{{ event.venue_name }}</div>
+                                        </td>
+                                        <td>{{ event.venue_name }}</td>
+                                        <td>{{ event.organizer_name }}</td>
+                                        <td>{{ event.event_date_display }}</td>
+                                        <td><span class="badge {{ event.status_class }}">{{ event.status_label }}</span></td>
+                                        <td>
+                                            <div class="table-actions">
+                                                <button class="btn btn-outline btn-sm" type="button"
+                                                    data-modal-open="modal-event-edit"
+                                                    data-event-id="{{ event.event_id }}"
+                                                    data-event-title="{{ event.event_title }}"
+                                                    data-event-datetime="{{ event.event_datetime_local }}"
+                                                    data-venue-id="{{ event.venue_id }}"
+                                                    data-organizer-id="{{ event.organizer_id }}">
+                                                    Edit
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="7" class="table-subtitle">Belum ada event.</td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Ringkasan</h2>
+                    </div>
+                    <div class="summary-list">
+                        <div class="summary-item">
+                            <span class="summary-label">Total organizer</span>
+                            <span class="summary-value">{{ organizers|length }}</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-label">Event bulan ini</span>
+                            <span class="summary-value">{{ stats.active_events }}</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-label">Event perlu review</span>
+                            <span class="summary-value">{{ stats.draft_events }}</span>
+                        </div>
+                    </div>
+                    <div class="section-divider"></div>
+                    <h3 class="section-title">Aksi Cepat</h3>
+                    <div class="action-list">
+                        <button class="btn btn-secondary" type="button" data-modal-open="modal-event-create">Buat Event Baru</button>
+                        <button class="btn btn-secondary">Lihat Kalender</button>
+                        <button class="btn btn-secondary">Unduh Template</button>
+                        <button class="btn btn-secondary">Import Draft</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<div class="modal is-hidden" aria-hidden="true" id="modal-event-create">
+    <div class="modal-overlay" data-modal-close></div>
+    <div class="modal-card modal-wide">
+        <div class="modal-header">
+            <h3 class="modal-title">Buat Event</h3>
+            <button class="modal-close" type="button" data-modal-close>&times;</button>
+        </div>
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="create">
+            <div class="form-group">
+                <label class="form-label required">Judul Event</label>
+                <input class="form-input" type="text" name="event_title" placeholder="Contoh: Tech Conference 2026">
+            </div>
+            <div class="form-group">
+                <label class="form-label required">Tanggal dan Waktu</label>
+                <input class="form-input" type="datetime-local" name="event_datetime">
+            </div>
+            <div class="form-group">
+                <label class="form-label required">Venue</label>
+                <select class="form-input" name="venue_id">
+                    <option value="">Pilih venue</option>
+                    {% for venue in venues %}
+                        <option value="{{ venue.venue_id }}">{{ venue.venue_name }} ({{ venue.city }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label required">Organizer</label>
+                <select class="form-input" name="organizer_id">
+                    <option value="">Pilih organizer</option>
+                    {% for organizer in organizers %}
+                        <option value="{{ organizer.organizer_id }}">{{ organizer.organizer_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" type="button" data-modal-close>Batal</button>
+                <button class="btn btn-primary" type="submit">Simpan Event</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal is-hidden" aria-hidden="true" id="modal-event-edit">
+    <div class="modal-overlay" data-modal-close></div>
+    <div class="modal-card modal-wide">
+        <div class="modal-header">
+            <h3 class="modal-title">Edit Event</h3>
+            <button class="modal-close" type="button" data-modal-close>&times;</button>
+        </div>
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="update">
+            <input type="hidden" name="event_id" id="event-edit-id">
+            <div class="form-group">
+                <label class="form-label required">Judul Event</label>
+                <input class="form-input" type="text" name="event_title" id="event-edit-title" value="">
+            </div>
+            <div class="form-group">
+                <label class="form-label required">Tanggal dan Waktu</label>
+                <input class="form-input" type="datetime-local" name="event_datetime" id="event-edit-datetime" value="">
+            </div>
+            <div class="form-group">
+                <label class="form-label required">Venue</label>
+                <select class="form-input" name="venue_id" id="event-edit-venue">
+                    {% for venue in venues %}
+                        <option value="{{ venue.venue_id }}">{{ venue.venue_name }} ({{ venue.city }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label required">Organizer</label>
+                <select class="form-input" name="organizer_id" id="event-edit-organizer">
+                    {% for organizer in organizers %}
+                        <option value="{{ organizer.organizer_id }}">{{ organizer.organizer_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" type="button" data-modal-close>Batal</button>
+                <button class="btn btn-primary" type="submit">Simpan Perubahan</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(() => {
+    const openButtons = document.querySelectorAll('[data-modal-open]');
+    const closeButtons = document.querySelectorAll('[data-modal-close]');
+
+    const openModal = (id) => {
+        const modal = document.getElementById(id);
+        if (!modal) {
+            return;
+        }
+        modal.classList.remove('is-hidden');
+        modal.setAttribute('aria-hidden', 'false');
+    };
+
+    const closeModal = (modal) => {
+        if (!modal) {
+            return;
+        }
+        modal.classList.add('is-hidden');
+        modal.setAttribute('aria-hidden', 'true');
+    };
+
+    openButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+            const modalId = button.getAttribute('data-modal-open');
+            openModal(modalId);
+
+            if (modalId === 'modal-event-edit') {
+                const eventId = button.getAttribute('data-event-id') || '';
+                const eventTitle = button.getAttribute('data-event-title') || '';
+                const eventDatetime = button.getAttribute('data-event-datetime') || '';
+                const venueId = button.getAttribute('data-venue-id') || '';
+                const organizerId = button.getAttribute('data-organizer-id') || '';
+
+                const idInput = document.getElementById('event-edit-id');
+                const titleInput = document.getElementById('event-edit-title');
+                const datetimeInput = document.getElementById('event-edit-datetime');
+                const venueSelect = document.getElementById('event-edit-venue');
+                const organizerSelect = document.getElementById('event-edit-organizer');
+
+                if (idInput) idInput.value = eventId;
+                if (titleInput) titleInput.value = eventTitle;
+                if (datetimeInput) datetimeInput.value = eventDatetime;
+                if (venueSelect) venueSelect.value = venueId;
+                if (organizerSelect) organizerSelect.value = organizerId;
+            }
+        });
+    });
+
+    closeButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+            closeModal(button.closest('.modal'));
+        });
+    });
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key !== 'Escape') {
+            return;
+        }
+        document.querySelectorAll('.modal:not(.is-hidden)').forEach(closeModal);
+    });
+})();
+</script>
+{% endblock %}
+
+{% block style %}
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .table-toolbar {
+            display: flex;
+            align-items: flex-end;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            min-width: 160px;
+        }
+
+        .filter-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .table-wrap {
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: auto;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+        }
+
+        .data-table th {
+            text-align: left;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-secondary);
+            background: var(--background);
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .data-table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .data-table tbody tr:hover {
+            background: var(--background);
+        }
+
+        .table-title {
+            font-weight: 600;
+        }
+
+        .table-subtitle {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .badge-success {
+            background: #ECFDF3;
+            color: #027A48;
+        }
+
+        .badge-warning {
+            background: #FFF7ED;
+            color: #C2410C;
+        }
+
+        .badge-muted {
+            background: #F3F4F6;
+            color: #6B7280;
+        }
+
+        .summary-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .summary-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 12px;
+            background: var(--background);
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+        }
+
+        .summary-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .summary-value {
+            font-weight: 600;
+        }
+
+        .section-divider {
+            border-top: 1px solid var(--border);
+            margin: 16px 0;
+        }
+
+        .section-title {
+            font-size: 0.875rem;
+            margin-bottom: 12px;
+        }
+
+        .modal.is-hidden {
+            display: none;
+        }
+
+        .modal-wide {
+            max-width: 560px;
+        }
+
+        @media (max-width: 1024px) {
+            .header-actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .bento-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .grid-cols-3 {
+                grid-template-columns: 1fr;
+            }
+
+            .table-actions {
+                flex-wrap: wrap;
+            }
+        }
+{% endblock %}

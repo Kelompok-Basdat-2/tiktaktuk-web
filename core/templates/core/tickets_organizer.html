@@ -1,0 +1,293 @@
+{% extends 'core/base.html' %}
+
+{% block body %}
+<div class="layout">
+    {% include 'core/_sidebar.html' with role=role active='tickets' user_name=user_name user_role=user_role %}
+    <main class="main-content">
+        <header class="header">
+            <div class="header-left">
+                <h1 class="header-title">Tiket Event Saya</h1>
+                <p class="header-subtitle">Kelola tiket untuk event yang Anda organize</p>
+            </div>
+            <div class="header-right">
+                <button class="btn btn-primary" onclick="openCreateModal()">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                    Tambah Tiket
+                </button>
+            </div>
+        </header>
+        <div class="page-content">
+            <!-- Stats -->
+            <div class="bento-grid" style="grid-template-columns: repeat(3, 1fr); margin-bottom: 24px;">
+                <div class="bento-card stat-card">
+                    <span class="stat-label">Tiket Saya</span>
+                    <span class="stat-value" id="total-tickets">8</span>
+                </div>
+                <div class="bento-card stat-card">
+                    <span class="stat-label">Terjual</span>
+                    <span class="stat-value" id="sold-tickets">5</span>
+                </div>
+                <div class="bento-card stat-card">
+                    <span class="stat-label">Tersedia</span>
+                    <span class="stat-value" id="available-tickets">3</span>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="card" style="margin-bottom: 24px;">
+                <div class="card-header">
+                    <h2 class="card-title">Filter</h2>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
+                    <div class="form-group">
+                        <label class="form-label">Cari Kode Tiket</label>
+                        <input type="text" class="form-input" placeholder="Masukkan kode tiket..." id="search-code">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Event</label>
+                        <select class="form-input" id="filter-event">
+                            <option value="">Semua Event Saya</option>
+                            <option value="evt_001">Coldplay: Music of the Spheres</option>
+                            <option value="evt_002">Jisoo: Blinks Camp</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Status</label>
+                        <select class="form-input" id="filter-status">
+                            <option value="">Semua</option>
+                            <option value="active">Aktif</option>
+                            <option value="used">Terjual</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ticket List -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Daftar Tiket</h2>
+                </div>
+                <div class="ticket-grid" id="ticket-list">
+                    {% for ticket in tickets %}
+                    <div class="ticket-card">
+                        <div class="ticket-header">
+                            <span class="ticket-code">{{ ticket.ticket_code }}</span>
+                            <span class="badge {% if ticket.payment_status == 'Lunas' %}badge-primary{% else %}badge-secondary{% endif %}">{{ ticket.payment_status }}</span>
+                        </div>
+                        <div class="ticket-body">
+                            <p class="ticket-event">{{ ticket.event_title }}</p>
+                            <p class="ticket-category">{{ ticket.category_name }} - Rp {{ ticket.price|floatformat:0 }}</p>
+                            {% if ticket.section %}
+                            <p class="ticket-seat">Seat: {{ ticket.section }} - Row {{ ticket.row_number }}, No. {{ ticket.seat_number }}</p>
+                            {% endif %}
+                            <p class="ticket-customer">Pelanggan: {{ ticket.customer_name }}</p>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p style="grid-column: 1/-1; text-align: center; color: var(--text-secondary);">Tidak ada tiket.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Create Ticket Modal -->
+<div class="modal" id="create-modal" style="display: none;">
+    <div class="modal-overlay" onclick="closeCreateModal()"></div>
+    <div class="modal-card" style="max-width: 500px;">
+        <div class="modal-header">
+            <h3 class="modal-title">Tambah Tiket</h3>
+            <button class="modal-close" onclick="closeCreateModal()">&times;</button>
+        </div>
+        <form method="POST" action="/tickets/create/">
+            {% csrf_token %}
+            <div class="form-group">
+                <label class="form-label required">Order</label>
+                <select class="form-input" id="create-order-select" name="order_id" required>
+                    <option value="">-- Pilih Order --</option>
+                    {% for order in orders %}
+                    <option value="{{ order.order_id }}">{{ order.order_id }} — {{ order.customer_name }} — {{ order.payment_status }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label required">Kategori Tiket</label>
+                <select class="form-input" id="create-category-select" name="category_id" required>
+                    <option value="">-- Pilih Kategori --</option>
+                </select>
+            </div>
+            <div class="form-group" id="create-seat-group" style="display: none;">
+                <label class="form-label">Kursi (Opsional)</label>
+                <select class="form-input" id="create-seat-select" name="seat_id">
+                    <option value="">-- Pilih Kursi --</option>
+                </select>
+                <span class="form-hint">Hanya tampil jika venue menggunakan reserved seating</span>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Kode Tiket</label>
+                <input type="text" class="form-input" value="Akan di-generate otomatis" disabled>
+                <span class="form-hint">Kode tiket akan dibuat secara otomatis</span>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeCreateModal()">Batal</button>
+                <button type="submit" class="btn btn-primary">Simpan</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Update Ticket Modal -->
+<div class="modal" id="update-modal" style="display: none;">
+    <div class="modal-overlay" onclick="closeUpdateModal()"></div>
+    <div class="modal-card" style="max-width: 500px;">
+        <div class="modal-header">
+            <h3 class="modal-title">Update Tiket</h3>
+            <button class="modal-close" onclick="closeUpdateModal()">&times;</button>
+        </div>
+        <form method="POST" action="" id="update-form">
+            {% csrf_token %}
+            <input type="hidden" id="update-ticket-id" name="ticket_id">
+            <div class="form-group">
+                <label class="form-label">Kode Tiket</label>
+                <input type="text" class="form-input" id="update-ticket-code" disabled>
+            </div>
+            <div class="form-group" id="update-seat-group">
+                <label class="form-label">Kursi</label>
+                <select class="form-input" id="update-seat-select" name="seat_id">
+                    <option value="">Tanpa Kursi</option>
+                </select>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeUpdateModal()">Batal</button>
+                <button type="submit" class="btn btn-primary">Simpan</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal" id="delete-modal" style="display: none;">
+    <div class="modal-overlay" onclick="closeDeleteModal()"></div>
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3 class="modal-title">Konfirmasi Hapus Tiket</h3>
+            <button class="modal-close" onclick="closeDeleteModal()">&times;</button>
+        </div>
+        <form method="POST" action="" id="delete-form">
+            {% csrf_token %}
+            <p style="margin-bottom: 16px;">Apakah Anda yakin ingin menghapus tiket <strong id="delete-ticket-label"></strong>? Tindakan ini tidak dapat dibatalkan.</p>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeDeleteModal()">Batal</button>
+                <button type="submit" class="btn btn-danger">Hapus</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function openCreateModal() {
+    document.getElementById('create-modal').style.display = 'flex';
+}
+function closeCreateModal() {
+    document.getElementById('create-modal').style.display = 'none';
+}
+function openUpdateModal(ticketId, ticketCode) {
+    document.getElementById('update-ticket-id').value = ticketId;
+    document.getElementById('update-ticket-code').value = ticketCode;
+    document.getElementById('update-form').action = '/tickets/' + ticketId + '/update/';
+    document.getElementById('update-modal').style.display = 'flex';
+}
+function closeUpdateModal() {
+    document.getElementById('update-modal').style.display = 'none';
+}
+function openDeleteModal(ticketId, ticketCode) {
+    document.getElementById('delete-ticket-label').textContent = ticketCode;
+    document.getElementById('delete-form').action = '/tickets/' + ticketId + '/delete/';
+    document.getElementById('delete-modal').style.display = 'flex';
+}
+function closeDeleteModal() {
+    document.getElementById('delete-modal').style.display = 'none';
+}
+</script>
+{% endblock %}
+
+{% block style %}
+.ticket-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px;
+}
+
+.ticket-card {
+    background: var(--background);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+}
+
+.ticket-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.ticket-code {
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+.ticket-body {
+    margin-bottom: 12px;
+}
+
+.ticket-body p {
+    font-size: 0.875rem;
+    margin-bottom: 4px;
+}
+
+.ticket-event {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.ticket-category {
+    color: var(--text-secondary);
+}
+
+.ticket-seat {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+}
+
+.ticket-customer {
+    color: var(--text-secondary);
+}
+
+.ticket-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 0.75rem;
+}
+
+.btn-danger {
+    background: var(--error);
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #DC2626;
+}
+
+.badge-secondary {
+    background: var(--border);
+    color: var(--text-secondary);
+}
+{% endblock %}
