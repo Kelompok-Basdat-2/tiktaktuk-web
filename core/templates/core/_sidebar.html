@@ -17,6 +17,7 @@ Sidebar template - include with:
         {% if role == 'admin' %}
             <a href="/venue/admin/" class="sidebar-item{% if active == 'venue' %} active{% endif %}">Manajemen Venue</a>
             <a href="/event/admin/" class="sidebar-item{% if active == 'event' %} active{% endif %}">Manajemen Event</a>
+            <a href="/artists/" class="sidebar-item{% if active == 'artists' %} active{% endif %}">Manajemen Artis</a>
             <a href="/seats/" class="sidebar-item{% if active == 'seats' %} active{% endif %}">Manajemen Kursi</a>
             <a href="/ticket-categories/" class="sidebar-item{% if active == 'ticket_category' %} active{% endif %}">Kategori Tiket</a>
             <a href="/tickets/" class="sidebar-item{% if active == 'tickets' %} active{% endif %}">Manajemen Tiket</a>
@@ -28,6 +29,7 @@ Sidebar template - include with:
         {% elif role == 'organizer' %}
             <a href="/event/organizer/" class="sidebar-item{% if active == 'event' %} active{% endif %}">Event Saya</a>
             <a href="/venue/organizer/" class="sidebar-item{% if active == 'venue' %} active{% endif %}">Manajemen Venue</a>
+            <a href="/artists/read/" class="sidebar-item{% if active == 'artists' %} active{% endif %}">Artis</a>
             <a href="/seats/" class="sidebar-item{% if active == 'seats' %} active{% endif %}">Manajemen Kursi</a>
             <a href="/ticket-categories/" class="sidebar-item{% if active == 'ticket_category' %} active{% endif %}">Kategori Tiket</a>
             <a href="/tickets/organizer/" class="sidebar-item{% if active == 'tickets' %} active{% endif %}">Manajemen Tiket</a>
@@ -41,9 +43,10 @@ Sidebar template - include with:
             <a href="/order?role=customer" class="sidebar-item{% if active == 'orders' %} active{% endif %}">Pesanan</a>
             <a href="/event/customer/" class="sidebar-item{% if active == 'event' %} active{% endif %}">Cari Event</a>
             <a href="/seats/" class="sidebar-item{% if active == 'seats' %} active{% endif %}">Kursi</a>
+            <a href="/ticket-categories/customer/" class="sidebar-item{% if active == 'ticket_category' %} active{% endif %}">Kategori Tiket</a>
             <a href="/promotion?role=customer" class="sidebar-item{% if active == 'promotions' %} active{% endif %}">Promosi</a>
             <a href="/venue/customer/" class="sidebar-item{% if active == 'venue' %} active{% endif %}">Venue</a>
-            <a href="/artists/read/" class="sidebar-item{% if active == 'artist' %} active{% endif %}">Artis</a>
+            <a href="/artists/read/" class="sidebar-item{% if active == 'artists' %} active{% endif %}">Artis</a>
             <a href="/profile/customer/" class="sidebar-item{% if active == 'profile' %} active{% endif %}">Profile</a>
         {% endif %}
     </nav>

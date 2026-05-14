@@ -117,7 +117,7 @@
 
 <div class="layout">
 
-    {% include 'core/_sidebar.html' with role='customer' active='ticket_category' user_name='Budi Customer' user_role='Customer' %}
+    {% include 'core/_sidebar.html' %}
 
     <main class="main-content">
 
@@ -132,15 +132,15 @@
             <div class="stats-grid">
                 <div class="stats-card">
                     <span class="stats-label">Total Kategori</span>
-                    <h2>8</h2>
+                    <h2>{{ total_categories }}</h2>
                 </div>
                 <div class="stats-card">
                     <span class="stats-label">Total Kuota</span>
-                    <h2>2.030</h2>
+                    <h2>{{ total_quota }}</h2>
                 </div>
                 <div class="stats-card">
                     <span class="stats-label">Harga Tertinggi</span>
-                    <h2>Rp 2.000.000</h2>
+                    <h2>Rp {{ max_price|floatformat:0 }}</h2>
                 </div>
             </div>
 
@@ -153,22 +153,32 @@
 
             <div class="card">
 
+                <form method="GET" style="display:contents;">
                 <div class="table-toolbar">
                     <div class="toolbar-left">
-                        <input type="text" placeholder="Cari kategori..." class="search-input" autocomplete="off">
-                        <select class="filter-select">
-                            <option>Semua Acara</option>
-                            <option>Konser Melodi Senja</option>
-                            <option>Festival Seni Budaya</option>
-                            <option>Malam Akustik Bandung</option>
+                        <input
+                            type="text"
+                            name="search"
+                            placeholder="Cari kategori atau acara..."
+                            class="search-input"
+                            autocomplete="off"
+                            value="{{ search }}"
+                        >
+                        <select name="event_id" class="filter-select" onchange="this.form.submit()">
+                            <option value="">Semua Acara</option>
+                            {% for ev in events %}
+                            <option value="{{ ev.event_id }}" {% if selected_event == ev.event_id %}selected{% endif %}>{{ ev.event_title }}</option>
+                            {% endfor %}
                         </select>
                     </div>
-                    <span class="result-count">8 kategori ditemukan</span>
+                    <span class="result-count">{{ total_found }} kategori ditemukan</span>
                 </div>
+                </form>
 
                 <table class="tc-table">
                     <thead>
                         <tr>
+                            <th>Category ID</th>
                             <th>Kategori</th>
                             <th>Acara</th>
                             <th>Harga</th>
@@ -176,54 +186,24 @@
                         </tr>
                     </thead>
                     <tbody>
+                        {% for cat in categories %}
                         <tr>
-                            <td><div class="category-name">WVIP</div><div class="category-id">cat-001</div></td>
-                            <td>Konser Melodi Senja</td>
-                            <td><span class="price-text">Rp 1.500.000</span></td>
-                            <td><span class="quota-text">50 tiket</span></td>
+                            <td><span style="font-family:monospace;font-size:0.75rem;color:var(--text-muted);">{{ cat.category_id }}</span></td>
+                            <td><div class="category-name">{{ cat.category_name }}</div></td>
+                            <td>{{ cat.event_title }}</td>
+                            <td><span class="price-text">Rp {{ cat.price|floatformat:0 }}</span></td>
+                            <td><span class="quota-text">{{ cat.quota }} tiket</span></td>
                         </tr>
+                        {% empty %}
                         <tr>
-                            <td><div class="category-name">VIP</div><div class="category-id">cat-002</div></td>
-                            <td>Konser Melodi Senja</td>
-                            <td><span class="price-text">Rp 750.000</span></td>
-                            <td><span class="quota-text">150 tiket</span></td>
+                            <td colspan="5">
+                                <div style="text-align:center;padding:48px 24px;color:var(--text-secondary);">
+                                    <div style="font-size:3rem;margin-bottom:12px;">🎫</div>
+                                    <p>Belum ada kategori tiket yang terdaftar.</p>
+                                </div>
+                            </td>
                         </tr>
-                        <tr>
-                            <td><div class="category-name">Category 1</div><div class="category-id">cat-003</div></td>
-                            <td>Konser Melodi Senja</td>
-                            <td><span class="price-text">Rp 450.000</span></td>
-                            <td><span class="quota-text">300 tiket</span></td>
-                        </tr>
-                        <tr>
-                            <td><div class="category-name">Category 2</div><div class="category-id">cat-004</div></td>
-                            <td>Konser Melodi Senja</td>
-                            <td><span class="price-text">Rp 250.000</span></td>
-                            <td><span class="quota-text">500 tiket</span></td>
-                        </tr>
-                        <tr>
-                            <td><div class="category-name">General Admission</div><div class="category-id">cat-005</div></td>
-                            <td>Festival Seni Budaya</td>
-                            <td><span class="price-text">Rp 150.000</span></td>
-                            <td><span class="quota-text">500 tiket</span></td>
-                        </tr>
-                        <tr>
-                            <td><div class="category-name">VVIP</div><div class="category-id">cat-006</div></td>
-                            <td>Malam Akustik Bandung</td>
-                            <td><span class="price-text">Rp 2.000.000</span></td>
-                            <td><span class="quota-text">30 tiket</span></td>
-                        </tr>
-                        <tr>
-                            <td><div class="category-name">VIP</div><div class="category-id">cat-007</div></td>
-                            <td>Malam Akustik Bandung</td>
-                            <td><span class="price-text">Rp 900.000</span></td>
-                            <td><span class="quota-text">100 tiket</span></td>
-                        </tr>
-                        <tr>
-                            <td><div class="category-name">Regular</div><div class="category-id">cat-008</div></td>
-                            <td>Malam Akustik Bandung</td>
-                            <td><span class="price-text">Rp 350.000</span></td>
-                            <td><span class="quota-text">400 tiket</span></td>
-                        </tr>
+                        {% endfor %}
                     </tbody>
                 </table>
 

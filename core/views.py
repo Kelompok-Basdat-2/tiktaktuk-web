@@ -6,6 +6,8 @@ from django.db import transaction
 
 from . import auth
 from . import tickets as tkt
+from . import artists as art
+from . import ticket_categories as tc_mod
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -459,92 +461,178 @@ def profile_admin(request):
 # Features 9-10: Artist Management
 # =============================================================================
 
-artists = [
-    {"id": "ART001", "name": "Fourtwnty", "genre": "Indie Folk", "on_event": True},
-    {"id": "ART002", "name": "Hindia", "genre": "Indie Pop", "on_event": True},
-    {"id": "ART003", "name": "Tulus", "genre": "Pop", "on_event": True},
-    {"id": "ART004", "name": "Nadin Amizah", "genre": "Folk", "on_event": True},
-    {"id": "ART005", "name": "Pamungkas", "genre": "Singer-Songwriter", "on_event": True},
-    {"id": "ART006", "name": "Raisa", "genre": "R&B / Pop", "on_event": False},
-    {"id": "ART007", "name": "Isyana Sarasvati", "genre": "Pop", "on_event": True},
-    {"id": "ART008", "name": "Ardhito Pramono", "genre": "Jazz / Pop", "on_event": False},
-]
+def _artist_role(request) -> str | None:
+    user = _session_user(request)
+    if not user:
+        return None
+    return auth.get_primary_role(user['user_id'])
+
+
+def _artist_context(request, role: str) -> dict:
+    user = _session_user(request)
+    return {
+        'role': role,
+        'user_name': user['username'] if user else '',
+        'user_role': {'admin': 'Administrator', 'organizer': 'Organizer', 'customer': 'Customer'}.get(role, 'User'),
+        'active': 'artists',
+    }
 
 
 def artist_list(request):
-    """Fitur 9/10 - R Artist list (admin with actions, customer read-only)."""
-    role = (request.GET.get('role') or 'customer').strip().lower()
-    if role not in {'admin', 'organizer', 'customer'}:
-        role = 'customer'
+    """Fitur 9/10 - Daftar artist. Admin: CUD buttons. Others: read-only."""
+    user = _session_user(request)
+    if not user:
+        return redirect('core:login')
+    role = auth.get_primary_role(user['user_id'])
+    if not role:
+        return redirect('core:login')
 
-    search_query = (request.GET.get('search') or '').strip().lower()
-    filtered_artists = [a for a in artists if not search_query or search_query in a['name'].lower() or search_query in (a.get('genre') or '').lower()]
+    search_query = (request.GET.get('search') or '').strip()
+    artist_list_data = art.get_all_artists(search=search_query)
+    stats = art.get_artist_stats()
 
-    total_artists = len(artists)
-    total_genres = len(set(a.get('genre') for a in artists if a.get('genre')))
-    total_event_artists = sum(1 for a in artists if a.get('on_event'))
+    # Map DB column names to what template expects
+    for a in artist_list_data:
+        a['id'] = a['artist_id']
 
-    return render(request, 'artist/artist_list.html', {
-        'role': role,
-        'artists': filtered_artists,
-        'artist_found': len(filtered_artists),
+    ctx = _artist_context(request, role)
+    ctx.update({
+        'artists': artist_list_data,
+        'artist_found': len(artist_list_data),
         'search_query': search_query,
-        'total_artists': total_artists,
-        'total_genres': total_genres,
-        'total_event_artists': total_event_artists,
+        **stats,
     })
+    return render(request, 'artist/artist_list.html', ctx)
 
 
 def artist_read(request):
-    """Fitur 10 - R Artist (customer/organizer/admin, tanpa action button)."""
-    return render(request, 'artist/artist_read.html')
+    """Fitur 10 - R Artist (customer/organizer view tanpa action)."""
+    user = _session_user(request)
+    if not user:
+        return redirect('core:login')
+    role = auth.get_primary_role(user['user_id'])
+
+    search_query = (request.GET.get('search') or '').strip()
+    artist_list_data = art.get_all_artists(search=search_query)
+    for a in artist_list_data:
+        a['id'] = a['artist_id']
+
+    stats = art.get_artist_stats()
+    ctx = _artist_context(request, role or 'customer')
+    ctx.update({
+        'artists': artist_list_data,
+        'artist_found': len(artist_list_data),
+        'search_query': search_query,
+        **stats,
+    })
+    return render(request, 'artist/artist_read.html', ctx)
 
 
 def artist_create(request):
     """Fitur 9 - C Artist (admin only)."""
+    user = _session_user(request)
+    if not user:
+        return redirect('core:login')
+    role = auth.get_primary_role(user['user_id'])
+    if role != 'admin':
+        return redirect('core:artist_list')
+
     if request.method == 'POST':
-        name = request.POST.get('name', '').strip()
-        genre = request.POST.get('genre', '').strip()
-        if name:
-            new_id = f"ART{len(artists) + 1:03d}"
-            artists.append({'id': new_id, 'name': name, 'genre': genre, 'on_event': False})
+        name = (request.POST.get('name') or '').strip()
+        genre = (request.POST.get('genre') or '').strip()
+        if not name:
+            messages.error(request, 'Nama artist wajib diisi.')
+            return render(request, 'artist/artist_create.html', {
+                'form_data': {'name': name, 'genre': genre},
+                **_artist_context(request, role),
+            })
+        try:
+            with transaction.atomic():
+                art.create_artist(name, genre or None)
             messages.success(request, f"Artist '{name}' berhasil ditambahkan.")
-            return redirect('artist_list')
-        else:
-            messages.error(request, "Nama artist wajib diisi.")
-    return render(request, 'artist/artist_create.html', {'form_data': {}})
+            return redirect('core:artist_list')
+        except Exception as e:
+            messages.error(request, _clean_db_error(e))
+            return render(request, 'artist/artist_create.html', {
+                'form_data': {'name': name, 'genre': genre},
+                **_artist_context(request, role),
+            })
+
+    return render(request, 'artist/artist_create.html', {
+        'form_data': {},
+        **_artist_context(request, role),
+    })
 
 
 def artist_update(request, id):
-    """Fitur 10 - U Artist (admin only)."""
-    artist = next((a for a in artists if a['id'] == id), None)
+    """Fitur 9 - U Artist (admin only)."""
+    user = _session_user(request)
+    if not user:
+        return redirect('core:login')
+    role = auth.get_primary_role(user['user_id'])
+    if role != 'admin':
+        return redirect('core:artist_list')
+
+    artist = art.get_artist_by_id(id)
     if not artist:
-        messages.error(request, "Artist tidak ditemukan.")
-        return redirect('artist_list')
+        messages.error(request, 'Artist tidak ditemukan.')
+        return redirect('core:artist_list')
+
+    artist['id'] = artist['artist_id']
+
     if request.method == 'POST':
-        name = request.POST.get('name', '').strip()
-        genre = request.POST.get('genre', '').strip()
-        if name:
-            artist['name'] = name
-            artist['genre'] = genre
+        name = (request.POST.get('name') or '').strip()
+        genre = (request.POST.get('genre') or '').strip()
+        if not name:
+            messages.error(request, 'Nama artist wajib diisi.')
+            return render(request, 'artist/artist_update.html', {
+                'artist': artist,
+                **_artist_context(request, role),
+            })
+        try:
+            with transaction.atomic():
+                art.update_artist(id, name, genre or None)
             messages.success(request, f"Artist '{name}' berhasil diperbarui.")
-            return redirect('artist_list')
-        else:
-            messages.error(request, "Nama artist wajib diisi.")
-    return render(request, 'artist/artist_update.html', {'artist': artist})
+            return redirect('core:artist_list')
+        except Exception as e:
+            messages.error(request, _clean_db_error(e))
+
+    return render(request, 'artist/artist_update.html', {
+        'artist': artist,
+        **_artist_context(request, role),
+    })
 
 
 def artist_delete(request, id):
-    """Fitur 10 - D Artist (admin only)."""
-    artist = next((a for a in artists if a['id'] == id), None)
+    """Fitur 9 - D Artist (admin only)."""
+    user = _session_user(request)
+    if not user:
+        return redirect('core:login')
+    role = auth.get_primary_role(user['user_id'])
+    if role != 'admin':
+        return redirect('core:artist_list')
+
+    artist = art.get_artist_by_id(id)
     if not artist:
-        messages.error(request, "Artist tidak ditemukan.")
-        return redirect('artist_list')
+        messages.error(request, 'Artist tidak ditemukan.')
+        return redirect('core:artist_list')
+
+    artist['id'] = artist['artist_id']
+
     if request.method == 'POST':
-        artists.remove(artist)
-        messages.success(request, f"Artist '{artist['name']}' berhasil dihapus.")
-        return redirect('artist_list')
-    return render(request, 'artist/artist_delete.html', {'artist': artist})
+        try:
+            with transaction.atomic():
+                art.delete_artist(id)
+            messages.success(request, f"Artist '{artist['name']}' berhasil dihapus.")
+            return redirect('core:artist_list')
+        except Exception as e:
+            messages.error(request, _clean_db_error(e))
+            return redirect('core:artist_list')
+
+    return render(request, 'artist/artist_delete.html', {
+        'artist': artist,
+        **_artist_context(request, role),
+    })
 
 
 def checkout(request):
@@ -580,13 +668,157 @@ def checkout(request):
     })
 
 
+def _tc_context(request, role: str) -> dict:
+    user = _session_user(request)
+    return {
+        'role': role,
+        'user_name': user['username'] if user else '',
+        'user_role': {'admin': 'Administrator', 'organizer': 'Organizer', 'customer': 'Customer'}.get(role, 'User'),
+        'active': 'ticket_category',
+    }
+
+
 def ticket_category_list(request):
     """
     Fitur 11/12 - CUD + R Ticket Category
-    Tampilan ini: sidebar admin, dengan tombol tambah + modal CUD
+    Admin/Organizer: full CRUD via modal. Customer/Guest: read-only.
     URL: /ticket-categories/
     """
-    return render(request, 'ticket_category/ticket_category_list.html')
+    user = _session_user(request)
+    role = auth.get_primary_role(user['user_id']) if user else None
+
+    # Customers and guests → redirect to read-only view
+    if not user or role not in ('admin', 'organizer'):
+        return redirect('core:ticket_category_list_customer')
+
+    search = (request.GET.get('search') or '').strip()
+    event_id_filter = (request.GET.get('event_id') or '').strip()
+
+    # ── Handle POST (Create / Update / Delete) ──────────────────────────────
+    if request.method == 'POST':
+        if role not in ('admin', 'organizer'):
+            return redirect('core:login')
+
+        action = request.POST.get('action', '')
+
+        if action == 'create':
+            cat_name = (request.POST.get('category_name') or '').strip()
+            quota_raw = (request.POST.get('quota') or '').strip()
+            price_raw = (request.POST.get('price') or '').strip()
+            tevent_id = (request.POST.get('tevent_id') or '').strip()
+
+            # Validation
+            error = None
+            if not cat_name:
+                error = 'Nama kategori wajib diisi.'
+            elif not quota_raw or not price_raw or not tevent_id:
+                error = 'Semua field wajib diisi.'
+            else:
+                try:
+                    quota = int(quota_raw)
+                    price = float(price_raw)
+                    if quota <= 0:
+                        error = 'Kuota harus bilangan bulat positif (> 0).'
+                    elif price < 0:
+                        error = 'Harga tidak boleh negatif (>= 0).'
+                    elif tc_mod.category_name_exists_in_event(cat_name, tevent_id):
+                        error = f"Kategori '{cat_name}' sudah ada pada event ini."
+                    else:
+                        # Check venue capacity
+                        capacity = tc_mod.get_venue_capacity_for_event(tevent_id)
+                        current_total = tc_mod.get_total_quota_for_event(tevent_id)
+                        if capacity is not None and (current_total + quota) > capacity:
+                            error = f'Total kuota melebihi kapasitas venue ({capacity} kursi).'
+                except ValueError:
+                    error = 'Kuota dan Harga harus berupa angka.'
+
+            if error:
+                messages.error(request, error)
+            else:
+                try:
+                    with transaction.atomic():
+                        tc_mod.create_ticket_category(cat_name, quota, price, tevent_id)
+                    messages.success(request, f"Kategori '{cat_name}' berhasil ditambahkan.")
+                except Exception as e:
+                    messages.error(request, _clean_db_error(e))
+
+        elif action == 'update':
+            category_id = (request.POST.get('category_id') or '').strip()
+            cat_name = (request.POST.get('category_name') or '').strip()
+            quota_raw = (request.POST.get('quota') or '').strip()
+            price_raw = (request.POST.get('price') or '').strip()
+
+            error = None
+            if not cat_name:
+                error = 'Nama kategori wajib diisi.'
+            elif not quota_raw or not price_raw:
+                error = 'Semua field wajib diisi.'
+            else:
+                try:
+                    quota = int(quota_raw)
+                    price = float(price_raw)
+                    if quota <= 0:
+                        error = 'Kuota harus bilangan bulat positif (> 0).'
+                    elif price < 0:
+                        error = 'Harga tidak boleh negatif (>= 0).'
+                    else:
+                        existing = tc_mod.get_ticket_category_by_id(category_id)
+                        if existing:
+                            # Check duplicate name (exclude self)
+                            if tc_mod.category_name_exists_in_event(
+                                cat_name, existing['tevent_id'],
+                                exclude_category_id=category_id
+                            ):
+                                error = f"Kategori '{cat_name}' sudah ada pada event ini."
+                            else:
+                                capacity = tc_mod.get_venue_capacity_for_event(existing['tevent_id'])
+                                current_total = tc_mod.get_total_quota_for_event(
+                                    existing['tevent_id'], exclude_category_id=category_id
+                                )
+                                if capacity is not None and (current_total + quota) > capacity:
+                                    error = f'Total kuota melebihi kapasitas venue ({capacity} kursi).'
+                except ValueError:
+                    error = 'Kuota dan Harga harus berupa angka.'
+
+            if error:
+                messages.error(request, error)
+            else:
+                try:
+                    with transaction.atomic():
+                        tc_mod.update_ticket_category(category_id, cat_name, quota, price)
+                    messages.success(request, f"Kategori '{cat_name}' berhasil diperbarui.")
+                except Exception as e:
+                    messages.error(request, _clean_db_error(e))
+
+        elif action == 'delete':
+            category_id = (request.POST.get('category_id') or '').strip()
+            try:
+                existing = tc_mod.get_ticket_category_by_id(category_id)
+                with transaction.atomic():
+                    tc_mod.delete_ticket_category(category_id)
+                name = existing['category_name'] if existing else category_id
+                messages.success(request, f"Kategori '{name}' berhasil dihapus.")
+            except Exception as e:
+                messages.error(request, _clean_db_error(e))
+
+        return redirect('core:ticket_category_list')
+
+    # ── GET ──────────────────────────────────────────────────────────────────
+    categories = tc_mod.get_all_ticket_categories(search=search, event_id=event_id_filter)
+    stats = tc_mod.get_ticket_category_stats()
+    events = tkt.get_events_for_dropdown()
+
+    ctx = _tc_context(request, role or 'guest')
+    ctx.update({
+        'categories': categories,
+        'total_found': len(categories),
+        'search': search,
+        'selected_event': event_id_filter,
+        'events': events,
+        **stats,
+    })
+    return render(request, 'ticket_category/ticket_category_list.html', ctx)
+
 
 def ticket_category_list_customer(request):
     """
@@ -594,7 +826,30 @@ def ticket_category_list_customer(request):
     Tampilan untuk Customer/Guest - read only, tanpa tombol aksi
     URL: /ticket-categories/customer/
     """
-    return render(request, 'ticket_category/ticket_category_list_customer.html')
+    user = _session_user(request)
+    role = auth.get_primary_role(user['user_id']) if user else 'guest'
+
+    # Admin/organizer should use the manage view
+    if user and role in ('admin', 'organizer'):
+        return redirect('core:ticket_category_list')
+
+    search = (request.GET.get('search') or '').strip()
+    event_id_filter = (request.GET.get('event_id') or '').strip()
+
+    categories = tc_mod.get_all_ticket_categories(search=search, event_id=event_id_filter)
+    stats = tc_mod.get_ticket_category_stats()
+    events = tkt.get_events_for_dropdown()
+
+    ctx = _tc_context(request, role or 'guest')
+    ctx.update({
+        'categories': categories,
+        'total_found': len(categories),
+        'search': search,
+        'selected_event': event_id_filter,
+        'events': events,
+        **stats,
+    })
+    return render(request, 'ticket_category/ticket_category_list_customer.html', ctx)
 
 # =============================================================================
 # Features 18-20: Ticket Management

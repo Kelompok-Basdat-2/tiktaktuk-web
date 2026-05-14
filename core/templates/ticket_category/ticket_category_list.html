@@ -130,10 +130,6 @@
 .action-btn:hover { background: var(--background); border-color: var(--text-secondary); }
 .action-btn.delete-btn:hover { color: var(--error); border-color: var(--error); background: #FEF2F2; }
 
-/* ── Modal ─────────────────────────────────────────────────────
-   Overlay harus di LUAR layout/sidebar supaya fixed bisa full.
-   Pastikan tidak ada ancestor yang punya transform/overflow hidden.
-─────────────────────────────────────────────────────────────── */
 .tc-modal-overlay {
     display: none;
     position: fixed;
@@ -145,7 +141,6 @@
     justify-content: center;
 }
 .tc-modal-overlay.active { display: flex; }
-
 
 .tc-modal-box {
     background: white;
@@ -195,7 +190,6 @@
 
 .modal-close:hover { background: var(--border); color: var(--text-primary); }
 
-/* Form fields */
 .form-group { margin-bottom: 20px; }
 
 .form-label {
@@ -249,7 +243,6 @@
     border-top: 1px solid var(--border);
 }
 
-/* Delete modal body */
 .delete-body {
     color: var(--text-secondary);
     font-size: 0.9rem;
@@ -268,13 +261,19 @@
     font-family: monospace;
 }
 
+.empty-state {
+    text-align: center;
+    padding: 48px 24px;
+    color: var(--text-secondary);
+}
+
 {% endblock %}
 
 {% block body %}
 
 <div class="layout">
 
-    {% include 'core/_sidebar.html' with role='organizer' active='ticket_category' user_name='Test' user_role='Organizer' %}
+    {% include 'core/_sidebar.html' %}
 
     <main class="main-content">
 
@@ -287,18 +286,26 @@
 
         <div class="page-content">
 
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert {% if 'berhasil' in message.tags or message.tags == 'success' %}alert-success{% else %}alert-error{% endif %}" style="margin-bottom:16px;">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+
             <div class="stats-grid">
                 <div class="stats-card">
                     <span class="stats-label">Total Kategori</span>
-                    <h2>8</h2>
+                    <h2>{{ total_categories }}</h2>
                 </div>
                 <div class="stats-card">
                     <span class="stats-label">Total Kuota</span>
-                    <h2>2.030</h2>
+                    <h2>{{ total_quota }}</h2>
                 </div>
                 <div class="stats-card">
                     <span class="stats-label">Harga Tertinggi</span>
-                    <h2>Rp 2.000.000</h2>
+                    <h2>Rp {{ max_price|floatformat:0 }}</h2>
                 </div>
             </div>
 
@@ -307,23 +314,34 @@
                     <h1>Kategori Tiket</h1>
                     <p>Kelola kategori dan harga tiket per acara</p>
                 </div>
-                <button class="btn btn-primary" onclick="openModal('createModal')">+ Tambah Kategori</button>
+                {% if role == 'admin' or role == 'organizer' %}
+                <button class="btn btn-primary" onclick="openModal('createModal')">+ Tambah Kategori Tiket</button>
+                {% endif %}
             </div>
 
             <div class="card">
 
+                <form method="GET" style="display:contents;">
                 <div class="table-toolbar">
                     <div class="toolbar-left">
-                        <input type="text" placeholder="Cari kategori..." class="search-input" autocomplete="off">
-                        <select class="filter-select">
-                            <option>Semua Acara</option>
-                            <option>Konser Melodi Senja</option>
-                            <option>Festival Seni Budaya</option>
-                            <option>Malam Akustik Bandung</option>
+                        <input
+                            type="text"
+                            name="search"
+                            placeholder="Cari kategori atau acara..."
+                            class="search-input"
+                            autocomplete="off"
+                            value="{{ search }}"
+                        >
+                        <select name="event_id" class="filter-select" onchange="this.form.submit()">
+                            <option value="">Semua Acara</option>
+                            {% for ev in events %}
+                            <option value="{{ ev.event_id }}" {% if selected_event == ev.event_id %}selected{% endif %}>{{ ev.event_title }}</option>
+                            {% endfor %}
                         </select>
                     </div>
-                    <span class="result-count">8 kategori ditemukan</span>
+                    <span class="result-count">{{ total_found }} kategori ditemukan</span>
                 </div>
+                </form>
 
                 <table class="tc-table">
                     <thead>
@@ -332,106 +350,42 @@
                             <th>Acara</th>
                             <th>Harga</th>
                             <th>Kuota</th>
+                            {% if role == 'admin' or role == 'organizer' %}
                             <th>Aksi</th>
+                            {% endif %}
                         </tr>
                     </thead>
                     <tbody>
+                        {% for cat in categories %}
                         <tr>
-                            <td><div class="category-name">WVIP</div><div class="category-id">cat-001</div></td>
-                            <td>Konser Melodi Senja</td>
-                            <td><span class="price-text">Rp 1.500.000</span></td>
-                            <td><span class="quota-text">50 tiket</span></td>
+                            <td>
+                                <div class="category-name">{{ cat.category_name }}</div>
+                                <div class="category-id">{{ cat.category_id }}</div>
+                            </td>
+                            <td>{{ cat.event_title }}</td>
+                            <td><span class="price-text">Rp {{ cat.price|floatformat:0 }}</span></td>
+                            <td><span class="quota-text">{{ cat.quota }} tiket</span></td>
+                            {% if role == 'admin' or role == 'organizer' %}
                             <td>
                                 <div class="action-btns">
-                                    <button class="action-btn" onclick="openUpdateModal('cat-001','WVIP','1500000','50','Konser Melodi Senja')">✏️</button>
-                                    <button class="action-btn delete-btn" onclick="openDeleteModal('cat-001','WVIP')">🗑️</button>
+                                    <button class="action-btn"
+                                        onclick="openUpdateModal('{{ cat.category_id }}','{{ cat.category_name|escapejs }}','{{ cat.price }}','{{ cat.quota }}','{{ cat.event_title|escapejs }}')">✏️</button>
+                                    <button class="action-btn delete-btn"
+                                        onclick="openDeleteModal('{{ cat.category_id }}','{{ cat.category_name|escapejs }}')">🗑️</button>
+                                </div>
+                            </td>
+                            {% endif %}
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="{% if role == 'admin' or role == 'organizer' %}5{% else %}4{% endif %}">
+                                <div class="empty-state">
+                                    <div style="font-size:3rem;margin-bottom:12px;">🎫</div>
+                                    <p>Belum ada kategori tiket yang terdaftar.</p>
                                 </div>
                             </td>
                         </tr>
-                        <tr>
-                            <td><div class="category-name">VIP</div><div class="category-id">cat-002</div></td>
-                            <td>Konser Melodi Senja</td>
-                            <td><span class="price-text">Rp 750.000</span></td>
-                            <td><span class="quota-text">150 tiket</span></td>
-                            <td>
-                                <div class="action-btns">
-                                    <button class="action-btn" onclick="openUpdateModal('cat-002','VIP','750000','150','Konser Melodi Senja')">✏️</button>
-                                    <button class="action-btn delete-btn" onclick="openDeleteModal('cat-002','VIP')">🗑️</button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td><div class="category-name">Category 1</div><div class="category-id">cat-003</div></td>
-                            <td>Konser Melodi Senja</td>
-                            <td><span class="price-text">Rp 450.000</span></td>
-                            <td><span class="quota-text">300 tiket</span></td>
-                            <td>
-                                <div class="action-btns">
-                                    <button class="action-btn" onclick="openUpdateModal('cat-003','Category 1','450000','300','Konser Melodi Senja')">✏️</button>
-                                    <button class="action-btn delete-btn" onclick="openDeleteModal('cat-003','Category 1')">🗑️</button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td><div class="category-name">Category 2</div><div class="category-id">cat-004</div></td>
-                            <td>Konser Melodi Senja</td>
-                            <td><span class="price-text">Rp 250.000</span></td>
-                            <td><span class="quota-text">500 tiket</span></td>
-                            <td>
-                                <div class="action-btns">
-                                    <button class="action-btn" onclick="openUpdateModal('cat-004','Category 2','250000','500','Konser Melodi Senja')">✏️</button>
-                                    <button class="action-btn delete-btn" onclick="openDeleteModal('cat-004','Category 2')">🗑️</button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td><div class="category-name">General Admission</div><div class="category-id">cat-005</div></td>
-                            <td>Festival Seni Budaya</td>
-                            <td><span class="price-text">Rp 150.000</span></td>
-                            <td><span class="quota-text">500 tiket</span></td>
-                            <td>
-                                <div class="action-btns">
-                                    <button class="action-btn" onclick="openUpdateModal('cat-005','General Admission','150000','500','Festival Seni Budaya')">✏️</button>
-                                    <button class="action-btn delete-btn" onclick="openDeleteModal('cat-005','General Admission')">🗑️</button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td><div class="category-name">VVIP</div><div class="category-id">cat-006</div></td>
-                            <td>Malam Akustik Bandung</td>
-                            <td><span class="price-text">Rp 2.000.000</span></td>
-                            <td><span class="quota-text">30 tiket</span></td>
-                            <td>
-                                <div class="action-btns">
-                                    <button class="action-btn" onclick="openUpdateModal('cat-006','VVIP','2000000','30','Malam Akustik Bandung')">✏️</button>
-                                    <button class="action-btn delete-btn" onclick="openDeleteModal('cat-006','VVIP')">🗑️</button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td><div class="category-name">VIP</div><div class="category-id">cat-007</div></td>
-                            <td>Malam Akustik Bandung</td>
-                            <td><span class="price-text">Rp 900.000</span></td>
-                            <td><span class="quota-text">100 tiket</span></td>
-                            <td>
-                                <div class="action-btns">
-                                    <button class="action-btn" onclick="openUpdateModal('cat-007','VIP','900000','100','Malam Akustik Bandung')">✏️</button>
-                                    <button class="action-btn delete-btn" onclick="openDeleteModal('cat-007','VIP')">🗑️</button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td><div class="category-name">Regular</div><div class="category-id">cat-008</div></td>
-                            <td>Malam Akustik Bandung</td>
-                            <td><span class="price-text">Rp 350.000</span></td>
-                            <td><span class="quota-text">400 tiket</span></td>
-                            <td>
-                                <div class="action-btns">
-                                    <button class="action-btn" onclick="openUpdateModal('cat-008','Regular','350000','400','Malam Akustik Bandung')">✏️</button>
-                                    <button class="action-btn delete-btn" onclick="openDeleteModal('cat-008','Regular')">🗑️</button>
-                                </div>
-                            </td>
-                        </tr>
+                        {% endfor %}
                     </tbody>
                 </table>
 
@@ -439,7 +393,6 @@
         </div>
     </main>
 </div>
-
 
 
 <!-- ═══════════ MODAL CREATE ═══════════ -->
@@ -450,36 +403,41 @@
             <button class="modal-close" onclick="closeModal('createModal')">✕</button>
         </div>
 
-        <div class="form-group">
-            <label class="form-label">Acara <span class="req">*</span></label>
-            <select class="form-select">
-                <option value="">Pilih acara...</option>
-                <option>Konser Melodi Senja</option>
-                <option>Festival Seni Budaya</option>
-                <option>Malam Akustik Bandung</option>
-            </select>
-        </div>
+        <form method="POST" action="{% url 'core:ticket_category_list' %}">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="create">
 
-        <div class="form-group">
-            <label class="form-label">Nama Kategori <span class="req">*</span></label>
-            <input type="text" class="form-input" placeholder="cth. WVIP">
-        </div>
-
-        <div class="form-row">
             <div class="form-group">
-                <label class="form-label">Harga (Rp) <span class="req">*</span></label>
-                <input type="number" class="form-input" placeholder="750000" min="0">
+                <label class="form-label">Acara <span class="req">*</span></label>
+                <select name="tevent_id" class="form-select" required>
+                    <option value="">Pilih acara...</option>
+                    {% for ev in events %}
+                    <option value="{{ ev.event_id }}">{{ ev.event_title }}</option>
+                    {% endfor %}
+                </select>
             </div>
-            <div class="form-group">
-                <label class="form-label">Kuota <span class="req">*</span></label>
-                <input type="number" class="form-input" placeholder="100" min="1">
-            </div>
-        </div>
 
-        <div class="modal-actions">
-            <button class="btn btn-secondary" onclick="closeModal('createModal')">Batal</button>
-            <button class="btn btn-primary">Tambah</button>
-        </div>
+            <div class="form-group">
+                <label class="form-label">Nama Kategori <span class="req">*</span></label>
+                <input type="text" name="category_name" class="form-input" placeholder="cth. WVIP" required>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Harga (Rp) <span class="req">*</span></label>
+                    <input type="number" name="price" class="form-input" placeholder="750000" min="0" step="1" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Kuota <span class="req">*</span></label>
+                    <input type="number" name="quota" class="form-input" placeholder="100" min="1" required>
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('createModal')">Batal</button>
+                <button type="submit" class="btn btn-primary">Tambah</button>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -491,35 +449,37 @@
             <button class="modal-close" onclick="closeModal('updateModal')">✕</button>
         </div>
 
-        <div class="form-group">
-            <label class="form-label">Acara <span class="req">*</span></label>
-            <select class="form-select" id="u_event">
-                <option>Konser Melodi Senja</option>
-                <option>Festival Seni Budaya</option>
-                <option>Malam Akustik Bandung</option>
-            </select>
-        </div>
+        <form method="POST" action="{% url 'core:ticket_category_list' %}">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="update">
+            <input type="hidden" name="category_id" id="u_cat_id">
 
-        <div class="form-group">
-            <label class="form-label">Nama Kategori <span class="req">*</span></label>
-            <input type="text" class="form-input" id="u_name">
-        </div>
-
-        <div class="form-row">
             <div class="form-group">
-                <label class="form-label">Harga (Rp) <span class="req">*</span></label>
-                <input type="number" class="form-input" id="u_price" min="0">
+                <label class="form-label">Acara</label>
+                <input type="text" class="form-input" id="u_event_display" disabled style="opacity:0.6;">
             </div>
-            <div class="form-group">
-                <label class="form-label">Kuota <span class="req">*</span></label>
-                <input type="number" class="form-input" id="u_quota" min="1">
-            </div>
-        </div>
 
-        <div class="modal-actions">
-            <button class="btn btn-secondary" onclick="closeModal('updateModal')">Batal</button>
-            <button class="btn btn-primary">Simpan</button>
-        </div>
+            <div class="form-group">
+                <label class="form-label">Nama Kategori <span class="req">*</span></label>
+                <input type="text" name="category_name" class="form-input" id="u_name" required>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Harga (Rp) <span class="req">*</span></label>
+                    <input type="number" name="price" class="form-input" id="u_price" min="0" step="1" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Kuota <span class="req">*</span></label>
+                    <input type="number" name="quota" class="form-input" id="u_quota" min="1" required>
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('updateModal')">Batal</button>
+                <button type="submit" class="btn btn-primary">Update</button>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -531,16 +491,23 @@
             <button class="modal-close" onclick="closeModal('deleteModal')">✕</button>
         </div>
 
-        <p class="delete-body">
-            Apakah Anda yakin ingin menghapus kategori
-            <span class="chip" id="d_name"></span>?
-            Tindakan ini tidak dapat dibatalkan.
-        </p>
+        <form method="POST" action="{% url 'core:ticket_category_list' %}">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="delete">
+            <input type="hidden" name="category_id" id="d_cat_id">
 
-        <div class="modal-actions">
-            <button class="btn btn-secondary" onclick="closeModal('deleteModal')">Batal</button>
-            <button class="btn btn-danger">Hapus</button>
-        </div>
+            <p class="delete-body">
+                Apakah Anda yakin ingin menghapus kategori
+                <span class="chip" id="d_cat_name"></span>
+                dengan ID <span class="chip" id="d_cat_id_display"></span>?
+                Tindakan ini tidak dapat dibatalkan.
+            </p>
+
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('deleteModal')">Batal</button>
+                <button type="submit" class="btn btn-danger">Confirm Deletion</button>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -554,21 +521,24 @@ function closeModal(id) {
 }
 
 function openUpdateModal(id, name, price, quota, eventName) {
-    document.getElementById('u_name').value  = name;
-    document.getElementById('u_price').value = price;
-    document.getElementById('u_quota').value = quota;
-    const sel = document.getElementById('u_event');
-    for (let o of sel.options) o.selected = (o.text === eventName);
+    document.getElementById('u_cat_id').value       = id;
+    document.getElementById('u_name').value         = name;
+    document.getElementById('u_price').value        = price;
+    document.getElementById('u_quota').value        = quota;
+    document.getElementById('u_event_display').value = eventName;
     openModal('updateModal');
 }
 
 function openDeleteModal(id, name) {
-    document.getElementById('d_name').textContent = name;
+    document.getElementById('d_cat_id').value       = id;
+    document.getElementById('d_cat_id_display').textContent = id;
+    document.getElementById('d_cat_name').textContent = name;
     openModal('deleteModal');
 }
 
-// Tutup saat klik backdrop
-document.querySelectorAll('.tc-modal-overlay').forEach(el => {    el.addEventListener('click', e => {
+// Close on backdrop click
+document.querySelectorAll('.tc-modal-overlay').forEach(el => {
+    el.addEventListener('click', e => {
         if (e.target === el) closeModal(el.id);
     });
 });

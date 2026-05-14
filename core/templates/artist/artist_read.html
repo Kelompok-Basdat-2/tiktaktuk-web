@@ -130,7 +130,7 @@
 
 <div class="layout">
 
-    {% include 'core/_sidebar.html' with role='organizer' active='artist' user_name='Test' user_role='Organizer' %}
+    {% include 'core/_sidebar.html' %}
 
     <main class="main-content">
 
@@ -146,15 +146,15 @@
             <div class="stats-grid">
                 <div class="stats-card">
                     <span class="stats-label">Total Artis</span>
-                    <h2>8</h2>
+                    <h2>{{ total_artists }}</h2>
                 </div>
                 <div class="stats-card">
                     <span class="stats-label">Genre</span>
-                    <h2>6</h2>
+                    <h2>{{ total_genres }}</h2>
                 </div>
                 <div class="stats-card">
                     <span class="stats-label">Tampil di Event</span>
-                    <h2>6</h2>
+                    <h2>{{ total_event_artists }}</h2>
                 </div>
             </div>
 
@@ -166,10 +166,19 @@
             </div>
 
             <div class="card">
+                <form method="GET" style="display:contents;">
                 <div class="table-toolbar">
-                    <input type="text" placeholder="Cari nama atau genre..." class="search-input" autocomplete="off">
-                    <span class="artist-count">8 artis ditemukan</span>
+                    <input
+                        type="text"
+                        name="search"
+                        placeholder="Cari nama atau genre..."
+                        class="search-input"
+                        autocomplete="off"
+                        value="{{ search_query }}"
+                    >
+                    <span class="artist-count">{{ artist_found }} artis ditemukan</span>
                 </div>
+                </form>
 
                 <table class="artist-table">
                     <thead>
@@ -179,102 +188,33 @@
                         </tr>
                     </thead>
                     <tbody>
+                        {% for artist in artists %}
                         <tr>
                             <td>
                                 <div class="artist-info">
-                                    <div class="artist-avatar">F</div>
+                                    <div class="artist-avatar">{{ artist.name|first|upper }}</div>
                                     <div>
-                                        <div class="artist-name">Fourtwnty</div>
-                                        <div class="artist-id">art-001</div>
+                                        <div class="artist-name">{{ artist.name }}</div>
+                                        <div class="artist-id">{{ artist.artist_id }}</div>
                                     </div>
                                 </div>
                             </td>
-                            <td><span class="genre-badge">Indie Folk</span></td>
-                        </tr>
-                        <tr>
                             <td>
-                                <div class="artist-info">
-                                    <div class="artist-avatar" style="background:linear-gradient(135deg,#F59E0B,#D97706)">H</div>
-                                    <div>
-                                        <div class="artist-name">Hindia</div>
-                                        <div class="artist-id">art-002</div>
-                                    </div>
-                                </div>
+                                {% if artist.genre %}
+                                    <span class="genre-badge">{{ artist.genre }}</span>
+                                {% else %}
+                                    <span class="genre-badge empty">—</span>
+                                {% endif %}
                             </td>
-                            <td><span class="genre-badge">Indie Pop</span></td>
                         </tr>
+                        {% empty %}
                         <tr>
-                            <td>
-                                <div class="artist-info">
-                                    <div class="artist-avatar" style="background:linear-gradient(135deg,#10B981,#059669)">T</div>
-                                    <div>
-                                        <div class="artist-name">Tulus</div>
-                                        <div class="artist-id">art-003</div>
-                                    </div>
-                                </div>
+                            <td colspan="2" style="text-align:center;padding:48px;color:var(--text-secondary);">
+                                <div style="font-size:2rem;margin-bottom:8px;">🎤</div>
+                                <p>Belum ada artist terdaftar.</p>
                             </td>
-                            <td><span class="genre-badge">Pop</span></td>
                         </tr>
-                        <tr>
-                            <td>
-                                <div class="artist-info">
-                                    <div class="artist-avatar" style="background:linear-gradient(135deg,#8B5CF6,#7C3AED)">N</div>
-                                    <div>
-                                        <div class="artist-name">Nadin Amizah</div>
-                                        <div class="artist-id">art-004</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td><span class="genre-badge">Folk</span></td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <div class="artist-info">
-                                    <div class="artist-avatar" style="background:linear-gradient(135deg,#EC4899,#DB2777)">P</div>
-                                    <div>
-                                        <div class="artist-name">Pamungkas</div>
-                                        <div class="artist-id">art-005</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td><span class="genre-badge">Singer-Songwriter</span></td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <div class="artist-info">
-                                    <div class="artist-avatar" style="background:linear-gradient(135deg,#EF4444,#DC2626)">R</div>
-                                    <div>
-                                        <div class="artist-name">Raisa</div>
-                                        <div class="artist-id">art-006</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td><span class="genre-badge">R&B / Pop</span></td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <div class="artist-info">
-                                    <div class="artist-avatar" style="background:linear-gradient(135deg,#06B6D4,#0891B2)">I</div>
-                                    <div>
-                                        <div class="artist-name">Isyana Sarasvati</div>
-                                        <div class="artist-id">art-007</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td><span class="genre-badge">Pop</span></td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <div class="artist-info">
-                                    <div class="artist-avatar" style="background:linear-gradient(135deg,#F97316,#EA580C)">A</div>
-                                    <div>
-                                        <div class="artist-name">Ardhito Pramono</div>
-                                        <div class="artist-id">art-008</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td><span class="genre-badge">Jazz / Pop</span></td>
-                        </tr>
+                        {% endfor %}
                     </tbody>
                 </table>
             </div>
