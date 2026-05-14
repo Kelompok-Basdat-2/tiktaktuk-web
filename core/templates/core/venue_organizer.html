@@ -78,7 +78,6 @@
                                     <th>Kota</th>
                                     <th>Kapasitas</th>
                                     <th>Status</th>
-                                    <th>Akses</th>
                                     <th>Aksi</th>
                                 </tr>
                             </thead>
@@ -93,7 +92,6 @@
                                         <td>{{ venue.city }}</td>
                                         <td>{{ venue.capacity }}</td>
                                         <td><span class="badge {{ venue.status_class }}">{{ venue.status_label }}</span></td>
-                                        <td><span class="badge {{ venue.access_class }}">{{ venue.access_label }}</span></td>
                                         <td>
                                             <div class="table-actions">
                                                 <button class="btn btn-outline btn-sm" type="button"
@@ -117,7 +115,7 @@
                                     {% endfor %}
                                 {% else %}
                                     <tr>
-                                        <td colspan="6" class="table-subtitle">Belum ada venue.</td>
+                                        <td colspan="5" class="table-subtitle">Belum ada venue.</td>
                                     </tr>
                                 {% endif %}
                             </tbody>
@@ -139,7 +137,6 @@
                     <div class="note-list">
                         <div class="note-item">Pastikan kapasitas dan alamat sesuai dokumen resmi.</div>
                         <div class="note-item">Venue draft tidak tampil di halaman customer.</div>
-                        <div class="note-item">Status menunggu akan diproses oleh admin.</div>
                     </div>
                 </div>
             </div>

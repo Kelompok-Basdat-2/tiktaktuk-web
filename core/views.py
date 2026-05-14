@@ -455,7 +455,16 @@ def _format_rupiah(value) -> str:
         return '-'
 
 
+def _ensure_event_datetime(event_dt):
+    if not event_dt:
+        return event_dt
+    if timezone.is_naive(event_dt) and timezone.is_aware(timezone.now()):
+        return timezone.make_aware(event_dt, timezone.get_current_timezone())
+    return event_dt
+
+
 def _event_status_label(event_dt) -> tuple[str, str]:
+    event_dt = _ensure_event_datetime(event_dt)
     if not event_dt:
         return 'Draft', 'badge-warning'
     now = timezone.now()
@@ -465,14 +474,20 @@ def _event_status_label(event_dt) -> tuple[str, str]:
 
 
 def _format_event_date(event_dt) -> str:
+    event_dt = _ensure_event_datetime(event_dt)
     if not event_dt:
         return '-'
+    if timezone.is_aware(event_dt):
+        event_dt = timezone.localtime(event_dt)
     return event_dt.strftime('%d %b %Y')
 
 
 def _format_event_datetime_local(event_dt) -> str:
+    event_dt = _ensure_event_datetime(event_dt)
     if not event_dt:
         return ''
+    if timezone.is_aware(event_dt):
+        event_dt = timezone.localtime(event_dt)
     return event_dt.strftime('%Y-%m-%dT%H:%M')
 
 
@@ -608,11 +623,6 @@ def venue_organizer(request):
         return redirect('core:venue_organizer')
 
     venues = vn.get_all_venues(search=search)
-    owned_venue_ids = set()
-    if organizer_id:
-        owned_events = ev.get_all_events(organizer_id=organizer_id)
-        owned_venue_ids = {event['venue_id'] for event in owned_events}
-
     approved = 0
     pending = 0
     city_set = set()
@@ -628,12 +638,6 @@ def venue_organizer(request):
             pending += 1
         venue['status_label'] = status_label
         venue['status_class'] = status_class
-        if venue['venue_id'] in owned_venue_ids:
-            venue['access_label'] = 'Milik saya'
-            venue['access_class'] = 'badge-primary'
-        else:
-            venue['access_label'] = 'Review admin'
-            venue['access_class'] = 'badge-muted'
 
     ctx = _role_context(request, 'organizer', 'venue', profile)
     ctx.update({
@@ -719,16 +723,17 @@ def event_admin(request):
     now = timezone.now()
 
     for event in events:
-        status_label, status_class = _event_status_label(event['event_datetime'])
+        event_dt = _ensure_event_datetime(event['event_datetime'])
+        status_label, status_class = _event_status_label(event_dt)
         if status_label == 'Aktif':
             active_events += 1
-        if event['event_datetime'] and event['event_datetime'] >= now and event['event_datetime'] <= now + timedelta(days=7):
+        if event_dt and event_dt >= now and event_dt <= now + timedelta(days=7):
             upcoming_week += 1
 
         event['status_label'] = status_label
         event['status_class'] = status_class
-        event['event_date_display'] = _format_event_date(event['event_datetime'])
-        event['event_datetime_local'] = _format_event_datetime_local(event['event_datetime'])
+        event['event_date_display'] = _format_event_date(event_dt)
+        event['event_datetime_local'] = _format_event_datetime_local(event_dt)
 
     ctx = _role_context(request, 'admin', 'event')
     ctx.update({
@@ -794,13 +799,14 @@ def event_organizer(request):
     now = timezone.now()
     active_events = 0
     for event in events:
-        status_label, status_class = _event_status_label(event['event_datetime'])
+        event_dt = _ensure_event_datetime(event['event_datetime'])
+        status_label, status_class = _event_status_label(event_dt)
         if status_label == 'Aktif':
             active_events += 1
         event['status_label'] = status_label
         event['status_class'] = status_class
-        event['event_date_display'] = _format_event_date(event['event_datetime'])
-        event['event_datetime_local'] = _format_event_datetime_local(event['event_datetime'])
+        event['event_date_display'] = _format_event_date(event_dt)
+        event['event_datetime_local'] = _format_event_datetime_local(event_dt)
 
     ctx = _role_context(request, 'organizer', 'event', profile)
     ctx.update({
@@ -838,12 +844,13 @@ def event_customer(request):
     cities = set()
     for event in events:
         cities.add(event['city'])
-        status_label, status_class = _event_status_label(event['event_datetime'])
+        event_dt = _ensure_event_datetime(event['event_datetime'])
+        status_label, status_class = _event_status_label(event_dt)
         event['status_label'] = status_label
         event['status_class'] = status_class
-        event['event_date_display'] = _format_event_date(event['event_datetime'])
+        event['event_date_display'] = _format_event_date(event_dt)
         event['min_price_display'] = _format_rupiah(event['min_price'])
-        if event['event_datetime'] and event['event_datetime'] >= now and event['event_datetime'] <= now + timedelta(days=7):
+        if event_dt and event_dt >= now and event_dt <= now + timedelta(days=7):
             upcoming_week += 1
 
     ctx = _role_context(request, role, 'event', profile)
@@ -863,6 +870,16 @@ def event_customer(request):
 def profile_admin(request):
     """Admin profile page - frontend only."""
     return render(request, 'core/profile_admin.html', {})
+
+
+def profile_customer(request):
+    """Customer profile page - frontend only."""
+    return render(request, 'core/profile_customer.html', {})
+
+
+def profile_organizer(request):
+    """Organizer profile page - frontend only."""
+    return render(request, 'core/profile_organizer.html', {})
 
 
 # =============================================================================
