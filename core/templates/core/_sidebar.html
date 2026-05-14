@@ -39,6 +39,11 @@ Sidebar template - include with:
             <a href="/promotion?role=organizer" class="sidebar-item{% if active == 'promotions' %} active{% endif %}">Promosi</a>
             <a href="/profile/organizer/" class="sidebar-item{% if active == 'profile' %} active{% endif %}">Profile</a>
         {% else %}
+            {% if role == 'guest' or not role %}
+            <a href="/ticket-categories/customer/" class="sidebar-item{% if active == 'ticket_category' %} active{% endif %}">Kategori Tiket</a>
+            <a href="/login/" class="sidebar-item" style="color:var(--primary);font-weight:600;">🔑 Masuk</a>
+            <a href="/register/" class="sidebar-item">Daftar Akun</a>
+            {% else %}
             <a href="/my-tickets/" class="sidebar-item{% if active == 'my_tickets' %} active{% endif %}">Tiket Saya</a>
             <a href="/order?role=customer" class="sidebar-item{% if active == 'orders' %} active{% endif %}">Pesanan</a>
             <a href="/event/customer/" class="sidebar-item{% if active == 'event' %} active{% endif %}">Cari Event</a>
@@ -48,16 +53,24 @@ Sidebar template - include with:
             <a href="/venue/customer/" class="sidebar-item{% if active == 'venue' %} active{% endif %}">Venue</a>
             <a href="/artists/read/" class="sidebar-item{% if active == 'artists' %} active{% endif %}">Artis</a>
             <a href="/profile/customer/" class="sidebar-item{% if active == 'profile' %} active{% endif %}">Profile</a>
+            {% endif %}
         {% endif %}
     </nav>
     <div class="sidebar-footer">
         <div class="user-info">
+            {% if role == 'guest' or not role %}
+            <span class="user-name">Tamu</span>
+            <span class="user-role">Guest</span>
+            {% else %}
             <span class="user-name">{{ user_name|default:'User' }}</span>
             <span class="user-role">{{ user_role|default:role|title }}</span>
+            {% endif %}
         </div>
+        {% if role != 'guest' and role %}
         <form method="post" action="{% url 'core:logout' %}" style="padding: 0 20px 8px;">
             {% csrf_token %}
             <button type="submit" class="sidebar-item" style="width:100%;text-align:left;background:none;border:none;cursor:pointer;font-family:inherit;font-size:0.875rem;">Logout</button>
         </form>
+        {% endif %}
     </div>
 </aside>

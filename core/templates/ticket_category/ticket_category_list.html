@@ -267,6 +267,25 @@
     color: var(--text-secondary);
 }
 
+.field-error {
+    color: #DC2626;
+    font-size: 0.75rem;
+    margin-top: 6px;
+    display: none;
+    align-items: center;
+    gap: 4px;
+}
+
+.field-error.show { display: flex; }
+
+.form-input.error-input { border-color: #DC2626; background: #FEF2F2; }
+
+.form-hint {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin-top: 5px;
+}
+
 {% endblock %}
 
 {% block body %}
@@ -425,11 +444,14 @@
             <div class="form-row">
                 <div class="form-group">
                     <label class="form-label">Harga (Rp) <span class="req">*</span></label>
-                    <input type="number" name="price" class="form-input" placeholder="750000" min="0" step="1" required>
+                    <input type="number" name="price" id="c_price" class="form-input" placeholder="750000" min="0" step="any" required>
+                    <div class="field-error" id="c_price_err">⚠ Harga tidak boleh negatif (min. Rp 0)</div>
+                    <div class="form-hint">Min. Rp 0 (boleh gratis)</div>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Kuota <span class="req">*</span></label>
-                    <input type="number" name="quota" class="form-input" placeholder="100" min="1" required>
+                    <input type="number" name="quota" id="c_quota" class="form-input" placeholder="100" min="1" step="1" required>
+                    <div class="field-error" id="c_quota_err">⚠ Kuota harus minimal 1</div>
                 </div>
             </div>
 
@@ -467,11 +489,14 @@
             <div class="form-row">
                 <div class="form-group">
                     <label class="form-label">Harga (Rp) <span class="req">*</span></label>
-                    <input type="number" name="price" class="form-input" id="u_price" min="0" step="1" required>
+                    <input type="number" name="price" class="form-input" id="u_price" min="0" step="any" required>
+                    <div class="field-error" id="u_price_err">⚠ Harga tidak boleh negatif (min. Rp 0)</div>
+                    <div class="form-hint">Min. Rp 0 (boleh gratis)</div>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Kuota <span class="req">*</span></label>
-                    <input type="number" name="quota" class="form-input" id="u_quota" min="1" required>
+                    <input type="number" name="quota" class="form-input" id="u_quota" min="1" step="1" required>
+                    <div class="field-error" id="u_quota_err">⚠ Kuota harus minimal 1</div>
                 </div>
             </div>
 
@@ -518,23 +543,89 @@ function openModal(id) {
 
 function closeModal(id) {
     document.getElementById(id).classList.remove('active');
+    // Clear errors when closing
+    document.querySelectorAll('.field-error').forEach(el => el.classList.remove('show'));
+    document.querySelectorAll('.error-input').forEach(el => el.classList.remove('error-input'));
 }
 
 function openUpdateModal(id, name, price, quota, eventName) {
-    document.getElementById('u_cat_id').value       = id;
-    document.getElementById('u_name').value         = name;
-    document.getElementById('u_price').value        = price;
-    document.getElementById('u_quota').value        = quota;
+    document.getElementById('u_cat_id').value        = id;
+    document.getElementById('u_name').value          = name;
+    document.getElementById('u_price').value         = price;
+    document.getElementById('u_quota').value         = quota;
     document.getElementById('u_event_display').value = eventName;
     openModal('updateModal');
 }
 
 function openDeleteModal(id, name) {
-    document.getElementById('d_cat_id').value       = id;
+    document.getElementById('d_cat_id').value            = id;
     document.getElementById('d_cat_id_display').textContent = id;
-    document.getElementById('d_cat_name').textContent = name;
+    document.getElementById('d_cat_name').textContent    = name;
     openModal('deleteModal');
 }
+
+// ── Inline validation ──────────────────────────────────────────
+function validatePriceField(inputId, errId) {
+    const input = document.getElementById(inputId);
+    const err   = document.getElementById(errId);
+    const val   = parseFloat(input.value);
+    if (input.value === '' || isNaN(val) || val < 0) {
+        input.classList.add('error-input');
+        err.classList.add('show');
+        input.focus();
+        return false;
+    }
+    input.classList.remove('error-input');
+    err.classList.remove('show');
+    return true;
+}
+
+function validateQuotaField(inputId, errId) {
+    const input = document.getElementById(inputId);
+    const err   = document.getElementById(errId);
+    const val   = parseInt(input.value, 10);
+    if (input.value === '' || isNaN(val) || val < 1) {
+        input.classList.add('error-input');
+        err.classList.add('show');
+        input.focus();
+        return false;
+    }
+    input.classList.remove('error-input');
+    err.classList.remove('show');
+    return true;
+}
+
+// Attach submit guard to create form
+document.getElementById('createModal').querySelector('form').addEventListener('submit', function(e) {
+    const priceOk = validatePriceField('c_price', 'c_price_err');
+    const quotaOk = validateQuotaField('c_quota', 'c_quota_err');
+    if (!priceOk || !quotaOk) {
+        e.preventDefault();
+    }
+});
+
+// Attach submit guard to update form
+document.getElementById('updateModal').querySelector('form').addEventListener('submit', function(e) {
+    const priceOk = validatePriceField('u_price', 'u_price_err');
+    const quotaOk = validateQuotaField('u_quota', 'u_quota_err');
+    if (!priceOk || !quotaOk) {
+        e.preventDefault();
+    }
+});
+
+// Live feedback on price input
+['c_price', 'u_price'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('input', () => {
+        const errId = id.replace('price', 'price_err');
+        const val = parseFloat(el.value);
+        if (!isNaN(val) && val >= 0) {
+            el.classList.remove('error-input');
+            document.getElementById(errId).classList.remove('show');
+        }
+    });
+});
 
 // Close on backdrop click
 document.querySelectorAll('.tc-modal-overlay').forEach(el => {
