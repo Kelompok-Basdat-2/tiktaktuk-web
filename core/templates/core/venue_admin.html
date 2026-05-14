@@ -2,7 +2,7 @@
 
 {% block body %}
 <div class="layout">
-    {% include 'core/_sidebar.html' with role='admin' active='venue' user_name='Reva Admin' user_role='Administrator' %}
+    {% include 'core/_sidebar.html' with role=role active=active user_name=user_name user_role=user_role %}
     <main class="main-content">
         <header class="header">
             <div class="header-left">
@@ -10,7 +10,9 @@
                 <p class="header-subtitle">Kelola seluruh venue dan kapasitas kursi</p>
             </div>
             <div class="header-right header-actions">
-                <input type="text" class="form-input" placeholder="Cari venue..." style="width: 240px; padding-left: 2.5rem;">
+                <form class="header-search" method="get">
+                    <input type="text" class="form-input" name="search" value="{{ search }}" placeholder="Cari venue..." style="width: 240px; padding-left: 2.5rem;">
+                </form>
                 <button class="btn btn-primary" type="button" data-modal-open="modal-venue-create">Tambah Venue</button>
             </div>
         </header>
@@ -18,23 +20,23 @@
             <div class="bento-grid">
                 <div class="bento-card stat-card">
                     <span class="stat-label">Total Venue</span>
-                    <span class="stat-value">24</span>
-                    <span class="stat-change positive">+3 bulan ini</span>
+                    <span class="stat-value">{{ stats.total_venues }}</span>
+                    <span class="stat-change positive">Total data</span>
                 </div>
                 <div class="bento-card stat-card">
                     <span class="stat-label">Kota Aktif</span>
-                    <span class="stat-value">8</span>
-                    <span class="stat-change positive">+1 bulan ini</span>
+                    <span class="stat-value">{{ stats.city_count }}</span>
+                    <span class="stat-change positive">Tersedia</span>
                 </div>
                 <div class="bento-card stat-card">
                     <span class="stat-label">Kapasitas Rata-rata</span>
-                    <span class="stat-value">3.1K</span>
-                    <span class="stat-change positive">Stabil</span>
+                    <span class="stat-value">{{ stats.avg_capacity }}</span>
+                    <span class="stat-change positive">Kursi</span>
                 </div>
                 <div class="bento-card stat-card">
                     <span class="stat-label">Perlu Review</span>
-                    <span class="stat-value">3</span>
-                    <span class="stat-change">Menunggu verifikasi</span>
+                    <span class="stat-value">{{ stats.no_event_count }}</span>
+                    <span class="stat-change">Belum ada event</span>
                 </div>
             </div>
 
@@ -91,74 +93,44 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr>
-                                    <td>ven-001</td>
-                                    <td>
-                                        <div class="table-title">Jakarta Convention Center</div>
-                                        <div class="table-subtitle">Jl. Jend. Gatot Subroto No.1</div>
-                                    </td>
-                                    <td>Jakarta</td>
-                                    <td>5.000</td>
-                                    <td><span class="badge badge-success">Aktif</span></td>
-                                    <td>2 hari lalu</td>
-                                    <td>
-                                        <div class="table-actions">
-                                            <button class="btn btn-outline btn-sm" type="button" data-modal-open="modal-venue-edit">Edit</button>
-                                            <button class="btn btn-danger btn-sm" type="button" data-modal-open="modal-venue-delete">Hapus</button>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>ven-004</td>
-                                    <td>
-                                        <div class="table-title">Surabaya Grand Ballroom</div>
-                                        <div class="table-subtitle">Jl. Pemuda No.100</div>
-                                    </td>
-                                    <td>Surabaya</td>
-                                    <td>3.000</td>
-                                    <td><span class="badge badge-warning">Perlu review</span></td>
-                                    <td>1 jam lalu</td>
-                                    <td>
-                                        <div class="table-actions">
-                                            <button class="btn btn-outline btn-sm" type="button" data-modal-open="modal-venue-edit">Edit</button>
-                                            <button class="btn btn-danger btn-sm" type="button" data-modal-open="modal-venue-delete">Hapus</button>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>ven-006</td>
-                                    <td>
-                                        <div class="table-title">Yogyakarta Borobudur Hall</div>
-                                        <div class="table-subtitle">Jl. Solo No.42</div>
-                                    </td>
-                                    <td>Yogyakarta</td>
-                                    <td>2.500</td>
-                                    <td><span class="badge badge-muted">Draft</span></td>
-                                    <td>3 hari lalu</td>
-                                    <td>
-                                        <div class="table-actions">
-                                            <button class="btn btn-outline btn-sm" type="button" data-modal-open="modal-venue-edit">Edit</button>
-                                            <button class="btn btn-danger btn-sm" type="button" data-modal-open="modal-venue-delete">Hapus</button>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>ven-008</td>
-                                    <td>
-                                        <div class="table-title">Makassar Four Points</div>
-                                        <div class="table-subtitle">Jl. Sultan Hasanuddin No.10</div>
-                                    </td>
-                                    <td>Makassar</td>
-                                    <td>1.200</td>
-                                    <td><span class="badge badge-success">Aktif</span></td>
-                                    <td>5 hari lalu</td>
-                                    <td>
-                                        <div class="table-actions">
-                                            <button class="btn btn-outline btn-sm" type="button" data-modal-open="modal-venue-edit">Edit</button>
-                                            <button class="btn btn-danger btn-sm" type="button" data-modal-open="modal-venue-delete">Hapus</button>
-                                        </div>
-                                    </td>
-                                </tr>
+                                {% if venues %}
+                                    {% for venue in venues %}
+                                    <tr>
+                                        <td>{{ venue.venue_id }}</td>
+                                        <td>
+                                            <div class="table-title">{{ venue.venue_name }}</div>
+                                            <div class="table-subtitle">{{ venue.address }}</div>
+                                        </td>
+                                        <td>{{ venue.city }}</td>
+                                        <td>{{ venue.capacity }}</td>
+                                        <td><span class="badge {{ venue.status_class }}">{{ venue.status_label }}</span></td>
+                                        <td>{{ venue.updated_label }}</td>
+                                        <td>
+                                            <div class="table-actions">
+                                                <button class="btn btn-outline btn-sm" type="button"
+                                                    data-modal-open="modal-venue-edit"
+                                                    data-venue-id="{{ venue.venue_id }}"
+                                                    data-venue-name="{{ venue.venue_name }}"
+                                                    data-venue-city="{{ venue.city }}"
+                                                    data-venue-address="{{ venue.address }}"
+                                                    data-venue-capacity="{{ venue.capacity }}">
+                                                    Edit
+                                                </button>
+                                                <button class="btn btn-danger btn-sm" type="button"
+                                                    data-modal-open="modal-venue-delete"
+                                                    data-venue-id="{{ venue.venue_id }}"
+                                                    data-venue-name="{{ venue.venue_name }}">
+                                                    Hapus
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="7" class="table-subtitle">Belum ada venue.</td>
+                                    </tr>
+                                {% endif %}
                             </tbody>
                         </table>
                     </div>
@@ -171,15 +143,15 @@
                     <div class="summary-list">
                         <div class="summary-item">
                             <span class="summary-label">Venue aktif</span>
-                            <span class="summary-value">21</span>
+                            <span class="summary-value">{{ stats.total_venues|default:0 }}</span>
                         </div>
                         <div class="summary-item">
                             <span class="summary-label">Draft</span>
-                            <span class="summary-value">2</span>
+                            <span class="summary-value">{{ stats.no_event_count|default:0 }}</span>
                         </div>
                         <div class="summary-item">
                             <span class="summary-label">Perlu review</span>
-                            <span class="summary-value">3</span>
+                            <span class="summary-value">{{ stats.no_event_count|default:0 }}</span>
                         </div>
                     </div>
                     <div class="section-divider"></div>
@@ -203,22 +175,24 @@
             <h3 class="modal-title">Tambah Venue</h3>
             <button class="modal-close" type="button" data-modal-close>&times;</button>
         </div>
-        <form>
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="create">
             <div class="form-group">
                 <label class="form-label required">Nama Venue</label>
-                <input class="form-input" type="text" placeholder="Contoh: Bandung Convention Hall">
+                <input class="form-input" type="text" name="venue_name" placeholder="Contoh: Bandung Convention Hall">
             </div>
             <div class="form-group">
                 <label class="form-label required">Kota</label>
-                <input class="form-input" type="text" placeholder="Contoh: Bandung">
+                <input class="form-input" type="text" name="city" placeholder="Contoh: Bandung">
             </div>
             <div class="form-group">
                 <label class="form-label required">Alamat</label>
-                <input class="form-input" type="text" placeholder="Contoh: Jl. Asia Afrika No. 90">
+                <input class="form-input" type="text" name="address" placeholder="Contoh: Jl. Asia Afrika No. 90">
             </div>
             <div class="form-group">
                 <label class="form-label required">Kapasitas</label>
-                <input class="form-input" type="number" placeholder="Contoh: 3000">
+                <input class="form-input" type="number" name="capacity" placeholder="Contoh: 3000">
             </div>
             <div class="modal-actions">
                 <button class="btn btn-secondary" type="button" data-modal-close>Batal</button>
@@ -235,22 +209,25 @@
             <h3 class="modal-title">Edit Venue</h3>
             <button class="modal-close" type="button" data-modal-close>&times;</button>
         </div>
-        <form>
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="update">
+            <input type="hidden" name="venue_id" id="venue-edit-id">
             <div class="form-group">
                 <label class="form-label required">Nama Venue</label>
-                <input class="form-input" type="text" value="Jakarta Convention Center">
+                <input class="form-input" type="text" name="venue_name" id="venue-edit-name" value="">
             </div>
             <div class="form-group">
                 <label class="form-label required">Kota</label>
-                <input class="form-input" type="text" value="Jakarta">
+                <input class="form-input" type="text" name="city" id="venue-edit-city" value="">
             </div>
             <div class="form-group">
                 <label class="form-label required">Alamat</label>
-                <input class="form-input" type="text" value="Jl. Jend. Gatot Subroto No.1">
+                <input class="form-input" type="text" name="address" id="venue-edit-address" value="">
             </div>
             <div class="form-group">
                 <label class="form-label required">Kapasitas</label>
-                <input class="form-input" type="number" value="5000">
+                <input class="form-input" type="number" name="capacity" id="venue-edit-capacity" value="">
             </div>
             <div class="modal-actions">
                 <button class="btn btn-secondary" type="button" data-modal-close>Batal</button>
@@ -267,11 +244,16 @@
             <h3 class="modal-title">Hapus Venue</h3>
             <button class="modal-close" type="button" data-modal-close>&times;</button>
         </div>
-        <p>Anda akan menghapus venue ini. Tindakan ini tidak bisa dibatalkan.</p>
-        <div class="modal-actions">
-            <button class="btn btn-secondary" type="button" data-modal-close>Batal</button>
-            <button class="btn btn-danger" type="button">Hapus Venue</button>
-        </div>
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="delete">
+            <input type="hidden" name="venue_id" id="venue-delete-id">
+            <p>Anda akan menghapus venue <strong id="venue-delete-name">ini</strong>. Tindakan ini tidak bisa dibatalkan.</p>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" type="button" data-modal-close>Batal</button>
+                <button class="btn btn-danger" type="submit">Hapus Venue</button>
+            </div>
+        </form>
     </div>
 </div>
 {% endblock %}
@@ -301,7 +283,38 @@
 
     openButtons.forEach((button) => {
         button.addEventListener('click', () => {
-            openModal(button.getAttribute('data-modal-open'));
+            const modalId = button.getAttribute('data-modal-open');
+            openModal(modalId);
+
+            if (modalId === 'modal-venue-edit') {
+                const venueId = button.getAttribute('data-venue-id') || '';
+                const venueName = button.getAttribute('data-venue-name') || '';
+                const venueCity = button.getAttribute('data-venue-city') || '';
+                const venueAddress = button.getAttribute('data-venue-address') || '';
+                const venueCapacity = button.getAttribute('data-venue-capacity') || '';
+
+                const idInput = document.getElementById('venue-edit-id');
+                const nameInput = document.getElementById('venue-edit-name');
+                const cityInput = document.getElementById('venue-edit-city');
+                const addressInput = document.getElementById('venue-edit-address');
+                const capacityInput = document.getElementById('venue-edit-capacity');
+
+                if (idInput) idInput.value = venueId;
+                if (nameInput) nameInput.value = venueName;
+                if (cityInput) cityInput.value = venueCity;
+                if (addressInput) addressInput.value = venueAddress;
+                if (capacityInput) capacityInput.value = venueCapacity;
+            }
+
+            if (modalId === 'modal-venue-delete') {
+                const venueId = button.getAttribute('data-venue-id') || '';
+                const venueName = button.getAttribute('data-venue-name') || 'ini';
+                const deleteId = document.getElementById('venue-delete-id');
+                const deleteName = document.getElementById('venue-delete-name');
+
+                if (deleteId) deleteId.value = venueId;
+                if (deleteName) deleteName.textContent = venueName;
+            }
         });
     });
 

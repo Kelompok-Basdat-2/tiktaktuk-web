@@ -2,7 +2,7 @@
 
 {% block body %}
 <div class="layout">
-    {% include 'core/_sidebar.html' with role='customer' active='event' user_name='Reviewer Satu' user_role='Customer' %}
+    {% include 'core/_sidebar.html' with role=role active=active user_name=user_name user_role=user_role %}
     <main class="main-content">
         <header class="header">
             <div class="header-left">
@@ -10,7 +10,9 @@
                 <p class="header-subtitle">Jelajahi event terbaru dan venue favorit</p>
             </div>
             <div class="header-right header-actions">
-                <input type="text" class="form-input" placeholder="Cari event..." style="width: 260px; padding-left: 2.5rem;">
+                <form class="header-search" method="get">
+                    <input type="text" class="form-input" name="search" value="{{ search }}" placeholder="Cari event..." style="width: 260px; padding-left: 2.5rem;">
+                </form>
                 <button class="btn btn-outline">Filter</button>
             </div>
         </header>
@@ -18,22 +20,22 @@
             <div class="bento-grid">
                 <div class="bento-card stat-card">
                     <span class="stat-label">Event Tersedia</span>
-                    <span class="stat-value">156</span>
+                    <span class="stat-value">{{ stats.total_events }}</span>
                     <span class="stat-change positive">+12 bulan ini</span>
                 </div>
                 <div class="bento-card stat-card">
                     <span class="stat-label">Event Dekat</span>
-                    <span class="stat-value">18</span>
+                    <span class="stat-value">{{ stats.upcoming_week }}</span>
                     <span class="stat-change positive">Minggu ini</span>
                 </div>
                 <div class="bento-card stat-card">
                     <span class="stat-label">Kota Aktif</span>
-                    <span class="stat-value">8</span>
+                    <span class="stat-value">{{ stats.city_count }}</span>
                     <span class="stat-change positive">Tersedia</span>
                 </div>
                 <div class="bento-card stat-card">
                     <span class="stat-label">Promo Aktif</span>
-                    <span class="stat-value">6</span>
+                    <span class="stat-value">{{ stats.promo_active }}</span>
                     <span class="stat-change">Diskon terbaru</span>
                 </div>
             </div>
@@ -93,133 +95,50 @@
                         </div>
                     </div>
                     <div class="event-grid">
-                        <div class="event-card">
-                            <div class="event-card-header">
-                                <div>
-                                    <h3 class="event-title">SoundFest 2026</h3>
-                                    <p class="event-subtitle">Jakarta Convention Center</p>
+                        {% if events %}
+                            {% for event in events %}
+                            <div class="event-card">
+                                <div class="event-card-header">
+                                    <div>
+                                        <h3 class="event-title">{{ event.event_title }}</h3>
+                                        <p class="event-subtitle">{{ event.venue_name }}</p>
+                                    </div>
+                                    <span class="badge {{ event.status_class }}">{{ event.status_label }}</span>
                                 </div>
-                                <span class="badge badge-primary">Musik</span>
-                            </div>
-                            <div class="event-meta">
-                                <div class="meta-item">
-                                    <span class="meta-label">Tanggal</span>
-                                    <span class="meta-value">15 Mei 2026</span>
+                                <div class="event-meta">
+                                    <div class="meta-item">
+                                        <span class="meta-label">Tanggal</span>
+                                        <span class="meta-value">{{ event.event_date_display }}</span>
+                                    </div>
+                                    <div class="meta-item">
+                                        <span class="meta-label">Harga mulai</span>
+                                        <span class="meta-value">{{ event.min_price_display }}</span>
+                                    </div>
+                                    <div class="meta-item">
+                                        <span class="meta-label">Kota</span>
+                                        <span class="meta-value">{{ event.city }}</span>
+                                    </div>
                                 </div>
-                                <div class="meta-item">
-                                    <span class="meta-label">Harga mulai</span>
-                                    <span class="meta-value">350K</span>
+                                <div class="event-tags">
+                                    <span class="chip">{{ event.organizer_name }}</span>
+                                    <span class="chip">{{ event.event_id }}</span>
                                 </div>
-                                <div class="meta-item">
-                                    <span class="meta-label">Kota</span>
-                                    <span class="meta-value">Jakarta</span>
-                                </div>
-                            </div>
-                            <div class="event-tags">
-                                <span class="chip">VIP tersedia</span>
-                                <span class="chip">On Sale</span>
-                            </div>
-                            <div class="event-actions">
-                                <button class="btn btn-outline btn-sm">Lihat Detail</button>
-                                <button class="btn btn-primary btn-sm">Beli Tiket</button>
-                            </div>
-                        </div>
-
-                        <div class="event-card">
-                            <div class="event-card-header">
-                                <div>
-                                    <h3 class="event-title">Tech Conference Indonesia</h3>
-                                    <p class="event-subtitle">Bandung Techno Park</p>
-                                </div>
-                                <span class="badge badge-success">Konferensi</span>
-                            </div>
-                            <div class="event-meta">
-                                <div class="meta-item">
-                                    <span class="meta-label">Tanggal</span>
-                                    <span class="meta-value">20 Mei 2026</span>
-                                </div>
-                                <div class="meta-item">
-                                    <span class="meta-label">Harga mulai</span>
-                                    <span class="meta-value">100K</span>
-                                </div>
-                                <div class="meta-item">
-                                    <span class="meta-label">Kota</span>
-                                    <span class="meta-value">Bandung</span>
+                                <div class="event-actions">
+                                    <button class="btn btn-outline btn-sm">Lihat Detail</button>
+                                    <button class="btn btn-primary btn-sm">Beli Tiket</button>
                                 </div>
                             </div>
-                            <div class="event-tags">
-                                <span class="chip">Early bird</span>
-                                <span class="chip">Speaker internasional</span>
-                            </div>
-                            <div class="event-actions">
-                                <button class="btn btn-outline btn-sm">Lihat Detail</button>
-                                <button class="btn btn-primary btn-sm">Beli Tiket</button>
-                            </div>
-                        </div>
-
-                        <div class="event-card">
-                            <div class="event-card-header">
-                                <div>
-                                    <h3 class="event-title">Comedy Festival Bali</h3>
-                                    <p class="event-subtitle">Bali Nusa Dua Theater</p>
-                                </div>
-                                <span class="badge badge-muted">Komedi</span>
-                            </div>
-                            <div class="event-meta">
-                                <div class="meta-item">
-                                    <span class="meta-label">Tanggal</span>
-                                    <span class="meta-value">05 Jul 2026</span>
-                                </div>
-                                <div class="meta-item">
-                                    <span class="meta-label">Harga mulai</span>
-                                    <span class="meta-value">500K</span>
-                                </div>
-                                <div class="meta-item">
-                                    <span class="meta-label">Kota</span>
-                                    <span class="meta-value">Bali</span>
+                            {% endfor %}
+                        {% else %}
+                            <div class="event-card">
+                                <div class="event-card-header">
+                                    <div>
+                                        <h3 class="event-title">Belum ada event</h3>
+                                        <p class="event-subtitle">Silakan cek kembali nanti.</p>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="event-tags">
-                                <span class="chip">Sold fast</span>
-                                <span class="chip">Headliner</span>
-                            </div>
-                            <div class="event-actions">
-                                <button class="btn btn-outline btn-sm">Lihat Detail</button>
-                                <button class="btn btn-primary btn-sm">Beli Tiket</button>
-                            </div>
-                        </div>
-
-                        <div class="event-card">
-                            <div class="event-card-header">
-                                <div>
-                                    <h3 class="event-title">Startup Summit Yogyakarta</h3>
-                                    <p class="event-subtitle">Yogyakarta Borobudur Hall</p>
-                                </div>
-                                <span class="badge badge-primary">Teknologi</span>
-                            </div>
-                            <div class="event-meta">
-                                <div class="meta-item">
-                                    <span class="meta-label">Tanggal</span>
-                                    <span class="meta-value">20 Agu 2026</span>
-                                </div>
-                                <div class="meta-item">
-                                    <span class="meta-label">Harga mulai</span>
-                                    <span class="meta-value">250K</span>
-                                </div>
-                                <div class="meta-item">
-                                    <span class="meta-label">Kota</span>
-                                    <span class="meta-value">Yogyakarta</span>
-                                </div>
-                            </div>
-                            <div class="event-tags">
-                                <span class="chip">Tech talk</span>
-                                <span class="chip">Networking</span>
-                            </div>
-                            <div class="event-actions">
-                                <button class="btn btn-outline btn-sm">Lihat Detail</button>
-                                <button class="btn btn-primary btn-sm">Beli Tiket</button>
-                            </div>
-                        </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>

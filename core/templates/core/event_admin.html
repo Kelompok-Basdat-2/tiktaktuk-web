@@ -2,7 +2,7 @@
 
 {% block body %}
 <div class="layout">
-    {% include 'core/_sidebar.html' with role='admin' active='event' user_name='Reva Admin' user_role='Administrator' %}
+    {% include 'core/_sidebar.html' with role=role active=active user_name=user_name user_role=user_role %}
     <main class="main-content">
         <header class="header">
             <div class="header-left">
@@ -10,7 +10,9 @@
                 <p class="header-subtitle">Buat dan perbarui event lintas organizer</p>
             </div>
             <div class="header-right header-actions">
-                <input type="text" class="form-input" placeholder="Cari event..." style="width: 240px; padding-left: 2.5rem;">
+                <form class="header-search" method="get">
+                    <input type="text" class="form-input" name="search" value="{{ search }}" placeholder="Cari event..." style="width: 240px; padding-left: 2.5rem;">
+                </form>
                 <button class="btn btn-primary" type="button" data-modal-open="modal-event-create">Buat Event</button>
             </div>
         </header>
@@ -18,22 +20,22 @@
             <div class="bento-grid">
                 <div class="bento-card stat-card">
                     <span class="stat-label">Total Event</span>
-                    <span class="stat-value">156</span>
-                    <span class="stat-change positive">+12 bulan ini</span>
+                    <span class="stat-value">{{ stats.total_events }}</span>
+                    <span class="stat-change positive">Total data</span>
                 </div>
                 <div class="bento-card stat-card">
                     <span class="stat-label">Event Aktif</span>
-                    <span class="stat-value">74</span>
-                    <span class="stat-change positive">+6 minggu ini</span>
+                    <span class="stat-value">{{ stats.active_events }}</span>
+                    <span class="stat-change positive">Berjalan</span>
                 </div>
                 <div class="bento-card stat-card">
                     <span class="stat-label">Draft</span>
-                    <span class="stat-value">18</span>
+                    <span class="stat-value">{{ stats.draft_events }}</span>
                     <span class="stat-change">Butuh review</span>
                 </div>
                 <div class="bento-card stat-card">
                     <span class="stat-label">Jadwal Padat</span>
-                    <span class="stat-value">9</span>
+                    <span class="stat-value">{{ stats.busy_week }}</span>
                     <span class="stat-change positive">Minggu ini</span>
                 </div>
             </div>
@@ -91,70 +93,38 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr>
-                                    <td>evt-001</td>
-                                    <td>
-                                        <div class="table-title">SoundFest 2026</div>
-                                        <div class="table-subtitle">Musik - Festival</div>
-                                    </td>
-                                    <td>Jakarta Convention Center</td>
-                                    <td>SoundFest Indonesia</td>
-                                    <td>15 Mei 2026</td>
-                                    <td><span class="badge badge-success">Aktif</span></td>
-                                    <td>
-                                        <div class="table-actions">
-                                            <button class="btn btn-outline btn-sm" type="button" data-modal-open="modal-event-edit">Edit</button>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>evt-004</td>
-                                    <td>
-                                        <div class="table-title">Rock Festival Java</div>
-                                        <div class="table-subtitle">Musik - Rock</div>
-                                    </td>
-                                    <td>Gelora Bung Karno</td>
-                                    <td>SoundFest Indonesia</td>
-                                    <td>10 Jun 2026</td>
-                                    <td><span class="badge badge-warning">Draft</span></td>
-                                    <td>
-                                        <div class="table-actions">
-                                            <button class="btn btn-outline btn-sm" type="button" data-modal-open="modal-event-edit">Edit</button>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>evt-006</td>
-                                    <td>
-                                        <div class="table-title">Comedy Festival Bali</div>
-                                        <div class="table-subtitle">Komedi - Live</div>
-                                    </td>
-                                    <td>Bali Nusa Dua Theater</td>
-                                    <td>Comedy Club</td>
-                                    <td>05 Jul 2026</td>
-                                    <td><span class="badge badge-success">Aktif</span></td>
-                                    <td>
-                                        <div class="table-actions">
-                                            <button class="btn btn-outline btn-sm" type="button" data-modal-open="modal-event-edit">Edit</button>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>evt-009</td>
-                                    <td>
-                                        <div class="table-title">Startup Summit Yogyakarta</div>
-                                        <div class="table-subtitle">Konferensi - Teknologi</div>
-                                    </td>
-                                    <td>Yogyakarta Borobudur Hall</td>
-                                    <td>TechIndo Events</td>
-                                    <td>20 Agu 2026</td>
-                                    <td><span class="badge badge-muted">Berjalan</span></td>
-                                    <td>
-                                        <div class="table-actions">
-                                            <button class="btn btn-outline btn-sm" type="button" data-modal-open="modal-event-edit">Edit</button>
-                                        </div>
-                                    </td>
-                                </tr>
+                                {% if events %}
+                                    {% for event in events %}
+                                    <tr>
+                                        <td>{{ event.event_id }}</td>
+                                        <td>
+                                            <div class="table-title">{{ event.event_title }}</div>
+                                            <div class="table-subtitle">{{ event.venue_name }}</div>
+                                        </td>
+                                        <td>{{ event.venue_name }}</td>
+                                        <td>{{ event.organizer_name }}</td>
+                                        <td>{{ event.event_date_display }}</td>
+                                        <td><span class="badge {{ event.status_class }}">{{ event.status_label }}</span></td>
+                                        <td>
+                                            <div class="table-actions">
+                                                <button class="btn btn-outline btn-sm" type="button"
+                                                    data-modal-open="modal-event-edit"
+                                                    data-event-id="{{ event.event_id }}"
+                                                    data-event-title="{{ event.event_title }}"
+                                                    data-event-datetime="{{ event.event_datetime_local }}"
+                                                    data-venue-id="{{ event.venue_id }}"
+                                                    data-organizer-id="{{ event.organizer_id }}">
+                                                    Edit
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="7" class="table-subtitle">Belum ada event.</td>
+                                    </tr>
+                                {% endif %}
                             </tbody>
                         </table>
                     </div>
@@ -167,15 +137,15 @@
                     <div class="summary-list">
                         <div class="summary-item">
                             <span class="summary-label">Total organizer</span>
-                            <span class="summary-value">18</span>
+                            <span class="summary-value">{{ organizers|length }}</span>
                         </div>
                         <div class="summary-item">
                             <span class="summary-label">Event bulan ini</span>
-                            <span class="summary-value">26</span>
+                            <span class="summary-value">{{ stats.active_events }}</span>
                         </div>
                         <div class="summary-item">
                             <span class="summary-label">Event perlu review</span>
-                            <span class="summary-value">7</span>
+                            <span class="summary-value">{{ stats.draft_events }}</span>
                         </div>
                     </div>
                     <div class="section-divider"></div>
@@ -199,39 +169,33 @@
             <h3 class="modal-title">Buat Event</h3>
             <button class="modal-close" type="button" data-modal-close>&times;</button>
         </div>
-        <form>
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="create">
             <div class="form-group">
                 <label class="form-label required">Judul Event</label>
-                <input class="form-input" type="text" placeholder="Contoh: Tech Conference 2026">
+                <input class="form-input" type="text" name="event_title" placeholder="Contoh: Tech Conference 2026">
             </div>
             <div class="form-group">
                 <label class="form-label required">Tanggal dan Waktu</label>
-                <input class="form-input" type="datetime-local">
+                <input class="form-input" type="datetime-local" name="event_datetime">
             </div>
             <div class="form-group">
                 <label class="form-label required">Venue</label>
-                <select class="form-input">
-                    <option>Pilih venue</option>
-                    <option>Jakarta Convention Center</option>
-                    <option>Bandung Techno Park</option>
-                    <option>Surabaya Grand Ballroom</option>
+                <select class="form-input" name="venue_id">
+                    <option value="">Pilih venue</option>
+                    {% for venue in venues %}
+                        <option value="{{ venue.venue_id }}">{{ venue.venue_name }} ({{ venue.city }})</option>
+                    {% endfor %}
                 </select>
             </div>
             <div class="form-group">
                 <label class="form-label required">Organizer</label>
-                <select class="form-input">
-                    <option>Pilih organizer</option>
-                    <option>SoundFest Indonesia</option>
-                    <option>TechIndo Events</option>
-                    <option>Comedy Club</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label class="form-label">Status</label>
-                <select class="form-input">
-                    <option>Draft</option>
-                    <option>Aktif</option>
-                    <option>Berjalan</option>
+                <select class="form-input" name="organizer_id">
+                    <option value="">Pilih organizer</option>
+                    {% for organizer in organizers %}
+                        <option value="{{ organizer.organizer_id }}">{{ organizer.organizer_name }}</option>
+                    {% endfor %}
                 </select>
             </div>
             <div class="modal-actions">
@@ -249,37 +213,32 @@
             <h3 class="modal-title">Edit Event</h3>
             <button class="modal-close" type="button" data-modal-close>&times;</button>
         </div>
-        <form>
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="update">
+            <input type="hidden" name="event_id" id="event-edit-id">
             <div class="form-group">
                 <label class="form-label required">Judul Event</label>
-                <input class="form-input" type="text" value="SoundFest 2026">
+                <input class="form-input" type="text" name="event_title" id="event-edit-title" value="">
             </div>
             <div class="form-group">
                 <label class="form-label required">Tanggal dan Waktu</label>
-                <input class="form-input" type="datetime-local" value="2026-05-15T19:00">
+                <input class="form-input" type="datetime-local" name="event_datetime" id="event-edit-datetime" value="">
             </div>
             <div class="form-group">
                 <label class="form-label required">Venue</label>
-                <select class="form-input">
-                    <option>Jakarta Convention Center</option>
-                    <option>Bandung Techno Park</option>
-                    <option>Surabaya Grand Ballroom</option>
+                <select class="form-input" name="venue_id" id="event-edit-venue">
+                    {% for venue in venues %}
+                        <option value="{{ venue.venue_id }}">{{ venue.venue_name }} ({{ venue.city }})</option>
+                    {% endfor %}
                 </select>
             </div>
             <div class="form-group">
                 <label class="form-label required">Organizer</label>
-                <select class="form-input">
-                    <option>SoundFest Indonesia</option>
-                    <option>TechIndo Events</option>
-                    <option>Comedy Club</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label class="form-label">Status</label>
-                <select class="form-input">
-                    <option>Aktif</option>
-                    <option>Draft</option>
-                    <option>Berjalan</option>
+                <select class="form-input" name="organizer_id" id="event-edit-organizer">
+                    {% for organizer in organizers %}
+                        <option value="{{ organizer.organizer_id }}">{{ organizer.organizer_name }}</option>
+                    {% endfor %}
                 </select>
             </div>
             <div class="modal-actions">
@@ -316,7 +275,28 @@
 
     openButtons.forEach((button) => {
         button.addEventListener('click', () => {
-            openModal(button.getAttribute('data-modal-open'));
+            const modalId = button.getAttribute('data-modal-open');
+            openModal(modalId);
+
+            if (modalId === 'modal-event-edit') {
+                const eventId = button.getAttribute('data-event-id') || '';
+                const eventTitle = button.getAttribute('data-event-title') || '';
+                const eventDatetime = button.getAttribute('data-event-datetime') || '';
+                const venueId = button.getAttribute('data-venue-id') || '';
+                const organizerId = button.getAttribute('data-organizer-id') || '';
+
+                const idInput = document.getElementById('event-edit-id');
+                const titleInput = document.getElementById('event-edit-title');
+                const datetimeInput = document.getElementById('event-edit-datetime');
+                const venueSelect = document.getElementById('event-edit-venue');
+                const organizerSelect = document.getElementById('event-edit-organizer');
+
+                if (idInput) idInput.value = eventId;
+                if (titleInput) titleInput.value = eventTitle;
+                if (datetimeInput) datetimeInput.value = eventDatetime;
+                if (venueSelect) venueSelect.value = venueId;
+                if (organizerSelect) organizerSelect.value = organizerId;
+            }
         });
     });
 

@@ -2,7 +2,7 @@
 
 {% block body %}
 <div class="layout">
-    {% include 'core/_sidebar.html' with role='customer' active='venue' user_name='Reviewer Satu' user_role='Customer' %}
+    {% include 'core/_sidebar.html' with role=role active=active user_name=user_name user_role=user_role %}
     <main class="main-content">
         <header class="header">
             <div class="header-left">
@@ -10,31 +10,33 @@
                 <p class="header-subtitle">Temukan venue terbaik untuk event favoritmu</p>
             </div>
             <div class="header-right header-actions">
-                <input type="text" class="form-input" placeholder="Cari venue..." style="width: 260px; padding-left: 2.5rem;">
-                <button class="btn btn-outline">Filter</button>
+                <form class="header-search" method="get">
+                    <input type="text" class="form-input" name="search" value="{{ search }}" placeholder="Cari venue..." style="width: 260px; padding-left: 2.5rem;">
+                </form>
+                <button class="btn btn-outline" type="button">Filter</button>
             </div>
         </header>
         <div class="page-content">
             <div class="bento-grid">
                 <div class="bento-card stat-card">
                     <span class="stat-label">Total Venue</span>
-                    <span class="stat-value">24</span>
-                    <span class="stat-change positive">+3 bulan ini</span>
+                    <span class="stat-value">{{ stats.total_venues }}</span>
+                    <span class="stat-change positive">Tersedia</span>
                 </div>
                 <div class="bento-card stat-card">
                     <span class="stat-label">Kota</span>
-                    <span class="stat-value">8</span>
+                    <span class="stat-value">{{ stats.city_count }}</span>
                     <span class="stat-change positive">Tersedia</span>
                 </div>
                 <div class="bento-card stat-card">
                     <span class="stat-label">Kapasitas Rata-rata</span>
-                    <span class="stat-value">2.7K</span>
-                    <span class="stat-change">All time</span>
+                    <span class="stat-value">{{ stats.avg_capacity }}</span>
+                    <span class="stat-change">Kursi</span>
                 </div>
                 <div class="bento-card stat-card">
                     <span class="stat-label">Event Terdekat</span>
-                    <span class="stat-value">12</span>
-                    <span class="stat-change positive">Minggu ini</span>
+                    <span class="stat-value">{{ stats.no_event_count }}</span>
+                    <span class="stat-change positive">Venue tanpa event</span>
                 </div>
             </div>
 
@@ -93,135 +95,44 @@
                         </div>
                     </div>
                     <div class="venue-grid">
-                        <div class="venue-card">
-                            <div class="venue-card-header">
-                                <div>
-                                    <h3 class="venue-title">Jakarta Convention Center</h3>
-                                    <p class="venue-subtitle">Jakarta, ID</p>
+                        {% if venues %}
+                            {% for venue in venues %}
+                            <div class="venue-card">
+                                <div class="venue-card-header">
+                                    <div>
+                                        <h3 class="venue-title">{{ venue.venue_name }}</h3>
+                                        <p class="venue-subtitle">{{ venue.city }}, ID</p>
+                                    </div>
+                                    <span class="badge badge-primary">Venue</span>
                                 </div>
-                                <span class="badge badge-primary">Indoor</span>
-                            </div>
-                            <div class="venue-meta">
-                                <div class="meta-item">
-                                    <span class="meta-label">Kapasitas</span>
-                                    <span class="meta-value">5.000</span>
+                                <div class="venue-meta">
+                                    <div class="meta-item">
+                                        <span class="meta-label">Kapasitas</span>
+                                        <span class="meta-value">{{ venue.capacity }}</span>
+                                    </div>
+                                    <div class="meta-item">
+                                        <span class="meta-label">Event Aktif</span>
+                                        <span class="meta-value">{{ venue.active_event_count }}</span>
+                                    </div>
+                                    <div class="meta-item">
+                                        <span class="meta-label">Total Event</span>
+                                        <span class="meta-value">{{ venue.event_count }}</span>
+                                    </div>
                                 </div>
-                                <div class="meta-item">
-                                    <span class="meta-label">Event Aktif</span>
-                                    <span class="meta-value">6</span>
+                                <div class="venue-tags">
+                                    <span class="chip">{{ venue.address }}</span>
                                 </div>
-                                <div class="meta-item">
-                                    <span class="meta-label">Rating</span>
-                                    <span class="meta-value">4.8</span>
-                                </div>
-                            </div>
-                            <div class="venue-tags">
-                                <span class="chip">VIP Area</span>
-                                <span class="chip">Parkir luas</span>
-                                <span class="chip">Akses transport</span>
-                            </div>
-                            <div class="venue-actions">
-                                <button class="btn btn-outline btn-sm">Lihat Detail</button>
-                                <button class="btn btn-secondary btn-sm">Lihat Event</button>
-                            </div>
-                        </div>
-
-                        <div class="venue-card">
-                            <div class="venue-card-header">
-                                <div>
-                                    <h3 class="venue-title">Bandung Techno Park</h3>
-                                    <p class="venue-subtitle">Bandung, ID</p>
-                                </div>
-                                <span class="badge badge-success">Outdoor</span>
-                            </div>
-                            <div class="venue-meta">
-                                <div class="meta-item">
-                                    <span class="meta-label">Kapasitas</span>
-                                    <span class="meta-value">2.000</span>
-                                </div>
-                                <div class="meta-item">
-                                    <span class="meta-label">Event Aktif</span>
-                                    <span class="meta-value">3</span>
-                                </div>
-                                <div class="meta-item">
-                                    <span class="meta-label">Rating</span>
-                                    <span class="meta-value">4.6</span>
+                                <div class="venue-actions">
+                                    <button class="btn btn-outline btn-sm">Lihat Detail</button>
+                                    <button class="btn btn-secondary btn-sm">Lihat Event</button>
                                 </div>
                             </div>
-                            <div class="venue-tags">
-                                <span class="chip">Festival</span>
-                                <span class="chip">Food court</span>
+                            {% endfor %}
+                        {% else %}
+                            <div class="venue-card">
+                                <p class="table-subtitle">Belum ada venue.</p>
                             </div>
-                            <div class="venue-actions">
-                                <button class="btn btn-outline btn-sm">Lihat Detail</button>
-                                <button class="btn btn-secondary btn-sm">Lihat Event</button>
-                            </div>
-                        </div>
-
-                        <div class="venue-card">
-                            <div class="venue-card-header">
-                                <div>
-                                    <h3 class="venue-title">Surabaya Grand Ballroom</h3>
-                                    <p class="venue-subtitle">Surabaya, ID</p>
-                                </div>
-                                <span class="badge badge-primary">Convention</span>
-                            </div>
-                            <div class="venue-meta">
-                                <div class="meta-item">
-                                    <span class="meta-label">Kapasitas</span>
-                                    <span class="meta-value">3.000</span>
-                                </div>
-                                <div class="meta-item">
-                                    <span class="meta-label">Event Aktif</span>
-                                    <span class="meta-value">4</span>
-                                </div>
-                                <div class="meta-item">
-                                    <span class="meta-label">Rating</span>
-                                    <span class="meta-value">4.7</span>
-                                </div>
-                            </div>
-                            <div class="venue-tags">
-                                <span class="chip">Indoor</span>
-                                <span class="chip">Stage besar</span>
-                                <span class="chip">Akses tol</span>
-                            </div>
-                            <div class="venue-actions">
-                                <button class="btn btn-outline btn-sm">Lihat Detail</button>
-                                <button class="btn btn-secondary btn-sm">Lihat Event</button>
-                            </div>
-                        </div>
-
-                        <div class="venue-card">
-                            <div class="venue-card-header">
-                                <div>
-                                    <h3 class="venue-title">Bali Nusa Dua Theater</h3>
-                                    <p class="venue-subtitle">Bali, ID</p>
-                                </div>
-                                <span class="badge badge-success">Indoor</span>
-                            </div>
-                            <div class="venue-meta">
-                                <div class="meta-item">
-                                    <span class="meta-label">Kapasitas</span>
-                                    <span class="meta-value">1.500</span>
-                                </div>
-                                <div class="meta-item">
-                                    <span class="meta-label">Event Aktif</span>
-                                    <span class="meta-value">2</span>
-                                </div>
-                                <div class="meta-item">
-                                    <span class="meta-label">Rating</span>
-                                    <span class="meta-value">4.9</span>
-                                </div>
-                            </div>
-                            <div class="venue-tags">
-                                <span class="chip">Premium</span>
-                                <span class="chip">Sound system</span>
-                            </div>
-                            <div class="venue-actions">
-                                <button class="btn btn-outline btn-sm">Lihat Detail</button>
-                                <button class="btn btn-secondary btn-sm">Lihat Event</button>
-                            </div>
-                        </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>

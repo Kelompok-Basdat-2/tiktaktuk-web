@@ -1,13 +1,16 @@
-from datetime import date
+from datetime import date, timedelta
 
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.db import transaction
+from django.utils import timezone
 
 from . import auth
 from . import tickets as tkt
 from . import artists as art
 from . import ticket_categories as tc_mod
+from . import venues as vn
+from . import events as ev
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -422,34 +425,439 @@ def venue_organizer(request):
     return render(request, 'core/venue_organizer.html', {})
 
 
+
+# =============================================================================
+# Features 5-8: Venue & Event
+# =============================================================================
+
+def _role_context(request, role: str, active: str, profile: dict | None = None) -> dict:
+    user = _session_user(request)
+    display_name = ''
+    if profile:
+        display_name = profile.get('full_name') or profile.get('organizer_name') or ''
+    if not display_name and user:
+        display_name = user.get('username', '')
+
+    return {
+        'role': role,
+        'active': active,
+        'user_name': display_name,
+        'user_role': {'admin': 'Administrator', 'organizer': 'Organizer', 'customer': 'Customer'}.get(role, 'User'),
+    }
+
+
+def _format_rupiah(value) -> str:
+    if value is None:
+        return '-'
+    try:
+        return f"Rp {int(value):,}".replace(',', '.')
+    except (TypeError, ValueError):
+        return '-'
+
+
+def _event_status_label(event_dt) -> tuple[str, str]:
+    if not event_dt:
+        return 'Draft', 'badge-warning'
+    now = timezone.now()
+    if event_dt >= now:
+        return 'Aktif', 'badge-success'
+    return 'Berjalan', 'badge-muted'
+
+
+def _format_event_date(event_dt) -> str:
+    if not event_dt:
+        return '-'
+    return event_dt.strftime('%d %b %Y')
+
+
+def _format_event_datetime_local(event_dt) -> str:
+    if not event_dt:
+        return ''
+    return event_dt.strftime('%Y-%m-%dT%H:%M')
+
+
+def venue_admin(request):
+    user = _session_user(request)
+    if not user:
+        return redirect('core:login')
+    role = auth.get_primary_role(user['user_id'])
+    if role != 'admin':
+        return _redirect_dashboard(role) if role else redirect('core:login')
+
+    search = (request.GET.get('search') or '').strip()
+
+    if request.method == 'POST':
+        action = request.POST.get('action', '')
+        venue_name = (request.POST.get('venue_name') or '').strip()
+        city = (request.POST.get('city') or '').strip()
+        address = (request.POST.get('address') or '').strip()
+        capacity_raw = (request.POST.get('capacity') or '').strip()
+        venue_id = (request.POST.get('venue_id') or '').strip()
+
+        if action in ('create', 'update'):
+            if not all([venue_name, city, address, capacity_raw]):
+                messages.error(request, 'Semua field wajib diisi.')
+                return redirect('core:venue_admin')
+            try:
+                capacity = int(capacity_raw)
+                if capacity <= 0:
+                    raise ValueError('capacity')
+            except ValueError:
+                messages.error(request, 'Kapasitas harus berupa angka > 0.')
+                return redirect('core:venue_admin')
+
+        try:
+            with transaction.atomic():
+                if action == 'create':
+                    vn.create_venue(venue_name, capacity, address, city)
+                    messages.success(request, f"Venue '{venue_name}' berhasil ditambahkan.")
+                elif action == 'update':
+                    if not venue_id:
+                        messages.error(request, 'Venue tidak ditemukan.')
+                        return redirect('core:venue_admin')
+                    vn.update_venue(venue_id, venue_name, capacity, address, city)
+                    messages.success(request, f"Venue '{venue_name}' berhasil diperbarui.")
+                elif action == 'delete':
+                    if not venue_id:
+                        messages.error(request, 'Venue tidak ditemukan.')
+                        return redirect('core:venue_admin')
+                    existing = vn.get_venue_by_id(venue_id)
+                    vn.delete_venue(venue_id)
+                    messages.success(request, f"Venue '{existing['venue_name'] if existing else venue_id}' berhasil dihapus.")
+        except Exception as e:
+            messages.error(request, _clean_db_error(e))
+
+        return redirect('core:venue_admin')
+
+    venues = vn.get_all_venues(search=search)
+    stats = vn.get_venue_stats()
+    for venue in venues:
+        if venue['active_event_count'] > 0:
+            status_label, status_class = 'Aktif', 'badge-success'
+        elif venue['event_count'] == 0:
+            status_label, status_class = 'Draft', 'badge-muted'
+        else:
+            status_label, status_class = 'Perlu review', 'badge-warning'
+        venue['status_label'] = status_label
+        venue['status_class'] = status_class
+        venue['updated_label'] = '—'
+
+    ctx = _role_context(request, 'admin', 'venue')
+    ctx.update({
+        'venues': venues,
+        'stats': stats,
+        'search': search,
+    })
+    return render(request, 'core/venue_admin.html', ctx)
+
+
+def venue_organizer(request):
+    user = _session_user(request)
+    if not user:
+        return redirect('core:login')
+    role = auth.get_primary_role(user['user_id'])
+    if role != 'organizer':
+        return _redirect_dashboard(role) if role else redirect('core:login')
+
+    profile = auth.get_organizer_profile(user['user_id'])
+    organizer_id = profile['organizer_id'] if profile else ''
+
+    search = (request.GET.get('search') or '').strip()
+
+    if request.method == 'POST':
+        action = request.POST.get('action', '')
+        venue_name = (request.POST.get('venue_name') or '').strip()
+        city = (request.POST.get('city') or '').strip()
+        address = (request.POST.get('address') or '').strip()
+        capacity_raw = (request.POST.get('capacity') or '').strip()
+        venue_id = (request.POST.get('venue_id') or '').strip()
+
+        if action in ('create', 'update'):
+            if not all([venue_name, city, address, capacity_raw]):
+                messages.error(request, 'Semua field wajib diisi.')
+                return redirect('core:venue_organizer')
+            try:
+                capacity = int(capacity_raw)
+                if capacity <= 0:
+                    raise ValueError('capacity')
+            except ValueError:
+                messages.error(request, 'Kapasitas harus berupa angka > 0.')
+                return redirect('core:venue_organizer')
+
+        try:
+            with transaction.atomic():
+                if action == 'create':
+                    vn.create_venue(venue_name, capacity, address, city)
+                    messages.success(request, f"Venue '{venue_name}' berhasil diajukan.")
+                elif action == 'update':
+                    if not venue_id:
+                        messages.error(request, 'Venue tidak ditemukan.')
+                        return redirect('core:venue_organizer')
+                    vn.update_venue(venue_id, venue_name, capacity, address, city)
+                    messages.success(request, f"Venue '{venue_name}' berhasil diperbarui.")
+                elif action == 'delete':
+                    if not venue_id:
+                        messages.error(request, 'Venue tidak ditemukan.')
+                        return redirect('core:venue_organizer')
+                    existing = vn.get_venue_by_id(venue_id)
+                    vn.delete_venue(venue_id)
+                    messages.success(request, f"Venue '{existing['venue_name'] if existing else venue_id}' berhasil dihapus.")
+        except Exception as e:
+            messages.error(request, _clean_db_error(e))
+
+        return redirect('core:venue_organizer')
+
+    venues = vn.get_all_venues(search=search)
+    owned_venue_ids = set()
+    if organizer_id:
+        owned_events = ev.get_all_events(organizer_id=organizer_id)
+        owned_venue_ids = {event['venue_id'] for event in owned_events}
+
+    approved = 0
+    pending = 0
+    city_set = set()
+    for venue in venues:
+        city_set.add(venue['city'])
+        if venue['active_event_count'] > 0:
+            status_label, status_class = 'Aktif', 'badge-success'
+            approved += 1
+        elif venue['event_count'] == 0:
+            status_label, status_class = 'Draft', 'badge-muted'
+        else:
+            status_label, status_class = 'Menunggu', 'badge-warning'
+            pending += 1
+        venue['status_label'] = status_label
+        venue['status_class'] = status_class
+        if venue['venue_id'] in owned_venue_ids:
+            venue['access_label'] = 'Milik saya'
+            venue['access_class'] = 'badge-primary'
+        else:
+            venue['access_label'] = 'Review admin'
+            venue['access_class'] = 'badge-muted'
+
+    ctx = _role_context(request, 'organizer', 'venue', profile)
+    ctx.update({
+        'venues': venues,
+        'search': search,
+        'stats': {
+            'total_venues': len(venues),
+            'approved': approved,
+            'pending': pending,
+            'city_count': len(city_set),
+        },
+    })
+    return render(request, 'core/venue_organizer.html', ctx)
+
+
 def venue_customer(request):
-    """Customer venue directory - frontend only."""
-    return render(request, 'core/venue_customer.html', {})
+    user = _session_user(request)
+    if not user:
+        return redirect('core:login')
+    role = auth.get_primary_role(user['user_id']) or 'customer'
+
+    profile = None
+    if role == 'customer':
+        profile = auth.get_customer_profile(user['user_id'])
+    elif role == 'organizer':
+        profile = auth.get_organizer_profile(user['user_id'])
+
+    search = (request.GET.get('search') or '').strip()
+    venues = vn.get_all_venues(search=search)
+    stats = vn.get_venue_stats()
+
+    ctx = _role_context(request, role, 'venue', profile)
+    ctx.update({
+        'venues': venues,
+        'stats': stats,
+        'search': search,
+    })
+    return render(request, 'core/venue_customer.html', ctx)
 
 
 def event_admin(request):
-    """Admin event management - frontend only."""
-    return render(request, 'core/event_admin.html', {})
+    user = _session_user(request)
+    if not user:
+        return redirect('core:login')
+    role = auth.get_primary_role(user['user_id'])
+    if role != 'admin':
+        return _redirect_dashboard(role) if role else redirect('core:login')
+
+    search = (request.GET.get('search') or '').strip()
+
+    if request.method == 'POST':
+        action = request.POST.get('action', '')
+        event_id = (request.POST.get('event_id') or '').strip()
+        event_title = (request.POST.get('event_title') or '').strip()
+        event_datetime = (request.POST.get('event_datetime') or '').strip()
+        venue_id = (request.POST.get('venue_id') or '').strip()
+        organizer_id = (request.POST.get('organizer_id') or '').strip()
+
+        if not all([event_title, event_datetime, venue_id, organizer_id]):
+            messages.error(request, 'Semua field wajib diisi.')
+            return redirect('core:event_admin')
+
+        try:
+            with transaction.atomic():
+                if action == 'create':
+                    ev.create_event(event_title, event_datetime, venue_id, organizer_id)
+                    messages.success(request, f"Event '{event_title}' berhasil dibuat.")
+                elif action == 'update':
+                    if not event_id:
+                        messages.error(request, 'Event tidak ditemukan.')
+                        return redirect('core:event_admin')
+                    ev.update_event(event_id, event_title, event_datetime, venue_id, organizer_id)
+                    messages.success(request, f"Event '{event_title}' berhasil diperbarui.")
+        except Exception as e:
+            messages.error(request, _clean_db_error(e))
+
+        return redirect('core:event_admin')
+
+    events = ev.get_all_events(search=search)
+    total_events = len(events)
+    active_events = 0
+    upcoming_week = 0
+    now = timezone.now()
+
+    for event in events:
+        status_label, status_class = _event_status_label(event['event_datetime'])
+        if status_label == 'Aktif':
+            active_events += 1
+        if event['event_datetime'] and event['event_datetime'] >= now and event['event_datetime'] <= now + timedelta(days=7):
+            upcoming_week += 1
+
+        event['status_label'] = status_label
+        event['status_class'] = status_class
+        event['event_date_display'] = _format_event_date(event['event_datetime'])
+        event['event_datetime_local'] = _format_event_datetime_local(event['event_datetime'])
+
+    ctx = _role_context(request, 'admin', 'event')
+    ctx.update({
+        'events': events,
+        'search': search,
+        'venues': tkt.get_venues_for_dropdown(),
+        'organizers': ev.get_organizers_for_dropdown(),
+        'stats': {
+            'total_events': total_events,
+            'active_events': active_events,
+            'draft_events': max(total_events - active_events, 0),
+            'busy_week': upcoming_week,
+        },
+    })
+    return render(request, 'core/event_admin.html', ctx)
 
 
 def event_organizer(request):
-    """Organizer event management - frontend only."""
-    return render(request, 'core/event_organizer.html', {})
+    user = _session_user(request)
+    if not user:
+        return redirect('core:login')
+    role = auth.get_primary_role(user['user_id'])
+    if role != 'organizer':
+        return _redirect_dashboard(role) if role else redirect('core:login')
+
+    profile = auth.get_organizer_profile(user['user_id'])
+    organizer_id = profile['organizer_id'] if profile else ''
+
+    search = (request.GET.get('search') or '').strip()
+
+    if request.method == 'POST':
+        action = request.POST.get('action', '')
+        event_id = (request.POST.get('event_id') or '').strip()
+        event_title = (request.POST.get('event_title') or '').strip()
+        event_datetime = (request.POST.get('event_datetime') or '').strip()
+        venue_id = (request.POST.get('venue_id') or '').strip()
+
+        if not all([event_title, event_datetime, venue_id]):
+            messages.error(request, 'Semua field wajib diisi.')
+            return redirect('core:event_organizer')
+
+        try:
+            with transaction.atomic():
+                if action == 'create':
+                    ev.create_event(event_title, event_datetime, venue_id, organizer_id)
+                    messages.success(request, f"Event '{event_title}' berhasil dibuat.")
+                elif action == 'update':
+                    if not event_id:
+                        messages.error(request, 'Event tidak ditemukan.')
+                        return redirect('core:event_organizer')
+                    existing = ev.get_event_by_id(event_id)
+                    if not existing or existing['organizer_id'] != organizer_id:
+                        messages.error(request, 'Event tidak ditemukan atau bukan milik Anda.')
+                        return redirect('core:event_organizer')
+                    ev.update_event(event_id, event_title, event_datetime, venue_id, organizer_id)
+                    messages.success(request, f"Event '{event_title}' berhasil diperbarui.")
+        except Exception as e:
+            messages.error(request, _clean_db_error(e))
+
+        return redirect('core:event_organizer')
+
+    events = ev.get_all_events(search=search, organizer_id=organizer_id)
+    now = timezone.now()
+    active_events = 0
+    for event in events:
+        status_label, status_class = _event_status_label(event['event_datetime'])
+        if status_label == 'Aktif':
+            active_events += 1
+        event['status_label'] = status_label
+        event['status_class'] = status_class
+        event['event_date_display'] = _format_event_date(event['event_datetime'])
+        event['event_datetime_local'] = _format_event_datetime_local(event['event_datetime'])
+
+    ctx = _role_context(request, 'organizer', 'event', profile)
+    ctx.update({
+        'events': events,
+        'search': search,
+        'venues': tkt.get_venues_for_dropdown(),
+        'organizer_id': organizer_id,
+        'stats': {
+            'total_events': len(events),
+            'active_events': active_events,
+            'draft_events': max(len(events) - active_events, 0),
+            'venue_count': len({event['venue_id'] for event in events}),
+        },
+    })
+    return render(request, 'core/event_organizer.html', ctx)
 
 
 def event_customer(request):
-    """Customer event directory - frontend only."""
-    return render(request, 'core/event_customer.html', {})
+    user = _session_user(request)
+    if not user:
+        return redirect('core:login')
+    role = auth.get_primary_role(user['user_id']) or 'customer'
 
+    profile = None
+    if role == 'customer':
+        profile = auth.get_customer_profile(user['user_id'])
+    elif role == 'organizer':
+        profile = auth.get_organizer_profile(user['user_id'])
 
-def profile_customer(request):
-    """Customer profile page - frontend only."""
-    return render(request, 'core/profile_customer.html', {})
+    search = (request.GET.get('search') or '').strip()
+    events = ev.get_all_events(search=search)
 
+    now = timezone.now()
+    upcoming_week = 0
+    cities = set()
+    for event in events:
+        cities.add(event['city'])
+        status_label, status_class = _event_status_label(event['event_datetime'])
+        event['status_label'] = status_label
+        event['status_class'] = status_class
+        event['event_date_display'] = _format_event_date(event['event_datetime'])
+        event['min_price_display'] = _format_rupiah(event['min_price'])
+        if event['event_datetime'] and event['event_datetime'] >= now and event['event_datetime'] <= now + timedelta(days=7):
+            upcoming_week += 1
 
-def profile_organizer(request):
-    """Organizer profile page - frontend only."""
-    return render(request, 'core/profile_organizer.html', {})
+    ctx = _role_context(request, role, 'event', profile)
+    ctx.update({
+        'events': events,
+        'search': search,
+        'stats': {
+            'total_events': len(events),
+            'upcoming_week': upcoming_week,
+            'city_count': len(cities),
+            'promo_active': 0,
+        },
+    })
+    return render(request, 'core/event_customer.html', ctx)
 
 
 def profile_admin(request):
