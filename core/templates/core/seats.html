@@ -32,47 +32,45 @@
                 <div class="card-header">
                     <h2 class="card-title">Daftar Kursi</h2>
                 </div>
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>Venue</th>
-                            <th>Section</th>
-                            <th>Baris</th>
-                            <th>No. Kursi</th>
-                            <th>Status</th>
-                            {% if role == 'admin' or role == 'organizer' %}
-                            <th></th>
-                            {% endif %}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for seat in seats %}
-                        <tr>
-                            <td>{{ seat.venue_name }}</td>
-                            <td>{{ seat.section }}</td>
-                            <td>{{ seat.row_number }}</td>
-                            <td>{{ seat.seat_number }}</td>
-                            <td>
-                                {% if seat.occupied %}
-                                <span class="badge badge-error">Terisi</span>
-                                {% else %}
-                                <span class="badge badge-success">Tersedia</span>
-                                {% endif %}
-                            </td>
-                            {% if role == 'admin' or role == 'organizer' %}
-                            <td class="actions-cell">
-                                <form method="POST" action="/seats/{{ seat.seat_id }}/delete/" style="display:inline;" onsubmit="return confirm('Hapus kursi {{ seat.section }} - Baris {{ seat.row_number }} No. {{ seat.seat_number }}?')">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn-outline-danger" {% if seat.occupied %}disabled title="Kursi sudah terisi"{% endif %}>Hapus</button>
-                                </form>
-                            </td>
-                            {% endif %}
-                        </tr>
-                        {% empty %}
-                        <tr><td colspan="{% if role == 'admin' or role == 'organizer' %}6{% else %}5{% endif %}" style="text-align:center;color:var(--text-secondary);">Tidak ada kursi.</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                <div class="table-wrap">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Venue</th>
+                                <th>Section</th>
+                                <th>Baris</th>
+                                <th>No. Kursi</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for seat in seats %}
+                            <tr>
+                                <td>
+                                    <div class="table-title">{{ seat.venue_name }}</div>
+                                    <div class="table-subtitle">{{ seat.city }}</div>
+                                </td>
+                                <td>{{ seat.section }}</td>
+                                <td>{{ seat.row_number }}</td>
+                                <td>{{ seat.seat_number }}</td>
+                                <td>
+                                    {% if seat.occupied %}
+                                    <span class="badge badge-error">Terisi</span>
+                                    {% else %}
+                                    <span class="badge badge-success">Tersedia</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="table-subtitle" style="text-align: center; padding: 32px;">
+                                    Tidak ada kursi.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </main>
@@ -80,33 +78,49 @@
 {% endblock %}
 
 {% block style %}
+.table-wrap {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: auto;
+}
+
 .data-table {
     width: 100%;
     border-collapse: collapse;
-}
-
-.data-table th,
-.data-table td {
-    padding: 12px 16px;
-    text-align: left;
-    border-bottom: 1px solid var(--border);
+    font-size: 0.875rem;
 }
 
 .data-table th {
+    text-align: left;
     font-size: 0.75rem;
-    font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     color: var(--text-secondary);
     background: var(--background);
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
 }
 
 .data-table td {
-    font-size: 0.875rem;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+}
+
+.data-table tbody tr:last-child td {
+    border-bottom: none;
 }
 
 .data-table tbody tr:hover {
     background: var(--background);
+}
+
+.table-title {
+    font-weight: 600;
+}
+
+.table-subtitle {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
 }
 
 .badge {
@@ -119,88 +133,12 @@
 }
 
 .badge-success {
-    background: #D1FAE5;
-    color: #065F46;
+    background: #ECFDF3;
+    color: #027A48;
 }
 
 .badge-error {
     background: #FEE2E2;
     color: #991B1B;
-}
-
-.btn-sm {
-    padding: 6px 12px;
-    font-size: 0.75rem;
-    margin-right: 4px;
-}
-
-.btn-danger {
-    background: var(--error);
-    color: white;
-}
-
-.btn-danger:hover {
-    background: #DC2626;
-}
-
-.btn-danger:disabled {
-    background: var(--border);
-    color: var(--text-muted);
-    cursor: not-allowed;
-}
-
-.actions-cell {
-    display: flex;
-    gap: 6px;
-    align-items: center;
-}
-
-.text-muted {
-    font-size: 0.75rem;
-    color: var(--text-muted);
-    font-style: italic;
-}
-
-.locked-indicator {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 0.75rem;
-    color: var(--text-muted);
-    padding: 4px 8px;
-    background: var(--background);
-    border-radius: 6px;
-    border: 1px solid var(--border);
-}
-
-.btn-outline {
-    background: transparent;
-    color: var(--text-secondary);
-    border: 1px solid var(--border);
-    padding: 4px 10px;
-    border-radius: 6px;
-    font-size: 0.75rem;
-    cursor: pointer;
-}
-
-.btn-outline:hover {
-    background: var(--background);
-    color: var(--text-primary);
-    border-color: var(--text-secondary);
-}
-
-.btn-outline-danger {
-    background: transparent;
-    color: var(--error);
-    border: 1px solid var(--error);
-    padding: 4px 10px;
-    border-radius: 6px;
-    font-size: 0.75rem;
-    cursor: pointer;
-}
-
-.btn-outline-danger:hover {
-    background: var(--error);
-    color: white;
 }
 {% endblock %}

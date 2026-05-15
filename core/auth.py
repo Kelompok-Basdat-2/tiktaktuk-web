@@ -100,6 +100,28 @@ def get_organizer_profile(user_id: str) -> dict | None:
     return None
 
 
+# ── Aggregates ───────────────────────────────────────────────────────────────
+
+def get_user_count() -> dict:
+    with connection.cursor() as c:
+        c.execute('''
+            SELECT r.role_name, COUNT(ar.user_id) AS cnt
+            FROM ROLE r
+            LEFT JOIN ACCOUNT_ROLE ar ON r.role_id = ar.role_id
+            GROUP BY r.role_name
+        ''')
+        result = {'total': 0, 'admin': 0, 'organizer': 0, 'customer': 0}
+        for role_name, cnt in c.fetchall():
+            result['total'] += cnt
+            if role_name == 'administrator':
+                result['admin'] = cnt
+            elif role_name == 'organizer':
+                result['organizer'] = cnt
+            elif role_name == 'customer':
+                result['customer'] = cnt
+    return result
+
+
 # ── User creation ─────────────────────────────────────────────────────────────
 
 def _next_id(table: str, prefix: str) -> str:

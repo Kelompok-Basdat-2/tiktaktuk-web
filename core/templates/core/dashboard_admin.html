@@ -17,72 +17,60 @@
             <div class="bento-grid">
                 <div class="bento-card stat-card">
                     <span class="stat-label">Total Venue</span>
-                    <span class="stat-value">24</span>
-                    <span class="stat-change positive">+3 this month</span>
+                    <span class="stat-value">{{ stats.total_venues }}</span>
                 </div>
                 <div class="bento-card stat-card">
                     <span class="stat-label">Total Event</span>
-                    <span class="stat-value">156</span>
-                    <span class="stat-change positive">+12 this month</span>
+                    <span class="stat-value">{{ stats.total_events }}</span>
                 </div>
                 <div class="bento-card stat-card">
                     <span class="stat-label">Total User</span>
-                    <span class="stat-value">1,243</span>
-                    <span class="stat-change positive">+89 this month</span>
+                    <span class="stat-value">{{ stats.total_users }}</span>
                 </div>
                 <div class="bento-card stat-card">
                     <span class="stat-label">Total Order</span>
-                    <span class="stat-value">3,891</span>
-                    <span class="stat-change positive">+234 this week</span>
+                    <span class="stat-value">{{ stats.total_orders }}</span>
                 </div>
                 <div class="bento-card stat-card">
                     <span class="stat-label">Revenue</span>
-                    <span class="stat-value">$124K</span>
-                    <span class="stat-change positive">+18% this month</span>
+                    <span class="stat-value">{{ stats.total_revenue }}</span>
                 </div>
                 <div class="bento-card stat-card">
                     <span class="stat-label">Active Promo</span>
-                    <span class="stat-value">8</span>
-                    <span class="stat-change positive">+2 this week</span>
+                    <span class="stat-value">{{ stats.active_promos }}</span>
                 </div>
                 <div class="bento-card stat-card">
                     <span class="stat-label">Artists</span>
-                    <span class="stat-value">47</span>
-                    <span class="stat-change positive">+5 this month</span>
+                    <span class="stat-value">{{ stats.total_artists }}</span>
                 </div>
                 <div class="bento-card stat-card">
                     <span class="stat-label">Pending Orders</span>
-                    <span class="stat-value">23</span>
+                    <span class="stat-value">{{ stats.pending_orders }}</span>
                     <span class="stat-change">Needs attention</span>
                 </div>
             </div>
             <div class="grid grid-cols-3" style="gap: 24px;">
                 <div class="card" style="grid-column: span 2;">
                     <div class="card-header">
-                        <h2 class="card-title">Recent Activities</h2>
-                        <button class="btn btn-primary">View All</button>
+                        <h2 class="card-title">Pesanan Terbaru</h2>
                     </div>
+                    {% for o in recent_orders %}
                     <div class="list-item">
                         <div>
-                            <p class="item-title">New venue added: Bandung Convention Hall</p>
-                            <span class="badge badge-primary">Admin</span>
+                            <p class="item-title">{{ o.customer_name }}</p>
+                            <span class="badge badge-primary">{{ o.order_date }}</span>
                         </div>
-                        <span class="badge">Just now</span>
+                        {% if o.payment_status|lower == 'pending' %}
+                        <span class="badge" style="background:#FEF9C3;color:#854D0E;">Pending</span>
+                        {% elif o.payment_status|lower == 'lunas' %}
+                        <span class="badge" style="background:#ECFDF3;color:#027A48;">Lunas</span>
+                        {% else %}
+                        <span class="badge">{{ o.payment_status }}</span>
+                        {% endif %}
                     </div>
-                    <div class="list-item">
-                        <div>
-                            <p class="item-title">Order #ORD-2026-0001 confirmed</p>
-                            <span class="badge badge-primary">Customer</span>
-                        </div>
-                        <span class="badge">5 min ago</span>
-                    </div>
-                    <div class="list-item">
-                        <div>
-                            <p class="item-title">New event created: Tech Conference 2026</p>
-                            <span class="badge badge-primary">Organizer</span>
-                        </div>
-                        <span class="badge">1 hour ago</span>
-                    </div>
+                    {% empty %}
+                    <p style="color:var(--text-secondary);font-size:0.875rem;">Belum ada pesanan.</p>
+                    {% endfor %}
                 </div>
                 <div class="card">
                     <div class="card-header">

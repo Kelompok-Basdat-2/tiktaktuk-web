@@ -199,8 +199,34 @@ def dashboard_admin(request):
     if role != 'admin':
         return _redirect_dashboard(role) if role else redirect('core:login')
 
+    now = timezone.now()
+    all_orders = od.get_all_orders()
+    all_events = ev.get_all_events()
+    all_promos = promo.get_promotions()
+    venue_stats = vn.get_venue_stats()
+    artist_stats = art.get_artist_stats()
+    user_counts = auth.get_user_count()
+
+    total_revenue = sum(o['total_amount'] for o in all_orders)
+    pending_orders = sum(1 for o in all_orders if o['payment_status'].lower() == 'pending')
+    active_promos = sum(1 for p in all_promos if p['start_date'] <= date.today() <= p['end_date'])
+    recent_orders = sorted(all_orders, key=lambda o: o['order_date'], reverse=True)[:3]
+
     ctx = _dashboard_context(request, 'admin', None)
     ctx['active'] = 'dashboard'
+    ctx.update({
+        'stats': {
+            'total_venues': venue_stats['total_venues'],
+            'total_events': len(all_events),
+            'total_users': user_counts['total'],
+            'total_orders': len(all_orders),
+            'total_revenue': _format_rupiah(total_revenue),
+            'active_promos': active_promos,
+            'total_artists': artist_stats['total_artists'],
+            'pending_orders': pending_orders,
+        },
+        'recent_orders': recent_orders,
+    })
     return render(request, 'core/dashboard_admin.html', ctx)
 
 
@@ -212,9 +238,36 @@ def dashboard_organizer(request):
     if role != 'organizer':
         return _redirect_dashboard(role) if role else redirect('core:login')
 
+    now = timezone.now()
     profile = auth.get_organizer_profile(user['user_id'])
+    organizer_id = profile['organizer_id'] if profile else ''
+
+    org_events = ev.get_all_events(organizer_id=organizer_id)
+    org_orders = od.get_orders_by_organizer(user['user_id'])
+    org_tickets = tkt.get_tickets_by_organizer(user['user_id'])
+    all_promos = promo.get_promotions()
+    artist_stats = art.get_artist_stats()
+
+    revenue = sum(o['total_amount'] for o in org_orders)
+    pending = sum(1 for o in org_orders if o['payment_status'].lower() == 'pending')
+    active_promos = sum(1 for p in all_promos if p['start_date'] <= date.today() <= p['end_date'])
+    my_venues = len({e['venue_id'] for e in org_events})
+    recent_events = sorted(org_events, key=lambda e: e['event_datetime'] or '', reverse=True)[:3]
+
     ctx = _dashboard_context(request, 'organizer', profile)
     ctx['active'] = 'dashboard'
+    ctx.update({
+        'stats': {
+            'my_events': len(org_events),
+            'tickets_sold': len(org_tickets),
+            'my_venues': my_venues,
+            'revenue': _format_rupiah(revenue),
+            'pending_orders': pending,
+            'active_promos': active_promos,
+            'total_artists': artist_stats['total_artists'],
+        },
+        'recent_events': recent_events,
+    })
     return render(request, 'core/dashboard_organizer.html', ctx)
 
 
@@ -226,9 +279,30 @@ def dashboard_customer(request):
     if role != 'customer':
         return _redirect_dashboard(role) if role else redirect('core:login')
 
+    now = timezone.now()
     profile = auth.get_customer_profile(user['user_id'])
+    my_tickets = tkt.get_tickets_by_customer(user['user_id'])
+    my_orders = od.get_orders_by_customer(user['user_id'])
+    all_events = ev.get_all_events()
+    all_promos = promo.get_promotions()
+
+    total_spent = sum(o['total_amount'] for o in my_orders)
+    active_promos = sum(1 for p in all_promos if p['start_date'] <= date.today() <= p['end_date'])
+    upcoming_events = [e for e in all_events if _ensure_event_datetime(e['event_datetime']) and _ensure_event_datetime(e['event_datetime']) >= now]
+    next_events = sorted(upcoming_events, key=lambda e: e['event_datetime'])[:3]
+
     ctx = _dashboard_context(request, 'customer', profile)
     ctx['active'] = 'dashboard'
+    ctx.update({
+        'stats': {
+            'my_tickets': len(my_tickets),
+            'my_orders': len(my_orders),
+            'total_spent': _format_rupiah(total_spent),
+            'active_promos': active_promos,
+            'upcoming_events': len(upcoming_events),
+        },
+        'upcoming_events_list': next_events,
+    })
     return render(request, 'core/dashboard_customer.html', ctx)
 
 
@@ -1591,6 +1665,7 @@ def seats(request):
     occupied = sum(1 for s in seat_list if s.get('occupied'))
     available = total - occupied
 
+    venues = tkt.get_venues_for_dropdown()
     ctx = _ticket_context(request, role, 'seats')
     ctx.update({
         'page_title': 'Daftar Kursi',
@@ -1599,8 +1674,15 @@ def seats(request):
         'total_seats': total,
         'occupied_seats': occupied,
         'available_seats': available,
+        'venues': venues,
     })
-    return render(request, 'core/seats.html', ctx)
+    if role == 'admin':
+        template = 'core/seats_admin.html'
+    elif role == 'organizer':
+        template = 'core/seats_organizer.html'
+    else:
+        template = 'core/seats.html'
+    return render(request, template, ctx)
 
 
 def seat_create(request):

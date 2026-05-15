@@ -17,72 +17,40 @@
             <div class="bento-grid">
                 <div class="bento-card stat-card">
                     <span class="stat-label">My Tickets</span>
-                    <span class="stat-value">5</span>
-                    <span class="stat-change positive">2 upcoming</span>
+                    <span class="stat-value">{{ stats.my_tickets }}</span>
                 </div>
                 <div class="bento-card stat-card">
                     <span class="stat-label">My Orders</span>
-                    <span class="stat-value">3</span>
-                    <span class="stat-change positive">1 pending</span>
-                </div>
-                <div class="bento-card stat-card">
-                    <span class="stat-label">Favorite Events</span>
-                    <span class="stat-value">12</span>
-                    <span class="stat-change positive">+3 this month</span>
+                    <span class="stat-value">{{ stats.my_orders }}</span>
                 </div>
                 <div class="bento-card stat-card">
                     <span class="stat-label">Total Spent</span>
-                    <span class="stat-value">$2.4K</span>
-                    <span class="stat-change positive">All time</span>
+                    <span class="stat-value">{{ stats.total_spent }}</span>
                 </div>
                 <div class="bento-card stat-card">
                     <span class="stat-label">Available Promos</span>
-                    <span class="stat-value">8</span>
-                    <span class="stat-change positive">Save up to 30%</span>
+                    <span class="stat-value">{{ stats.active_promos }}</span>
                 </div>
                 <div class="bento-card stat-card">
                     <span class="stat-label">Upcoming Events</span>
-                    <span class="stat-value">4</span>
-                    <span class="stat-change positive">This month</span>
-                </div>
-                <div class="bento-card stat-card">
-                    <span class="stat-label">Venues Visited</span>
-                    <span class="stat-value">7</span>
-                    <span class="stat-change positive">+2 new</span>
-                </div>
-                <div class="bento-card stat-card">
-                    <span class="stat-label">Artists Followed</span>
-                    <span class="stat-value">15</span>
-                    <span class="stat-change positive">+2 this month</span>
+                    <span class="stat-value">{{ stats.upcoming_events }}</span>
                 </div>
             </div>
             <div class="grid grid-cols-3" style="gap: 24px;">
                 <div class="card" style="grid-column: span 2;">
                     <div class="card-header">
-                        <h2 class="card-title">Upcoming Events</h2>
-                        <button class="btn btn-primary">Browse Events</button>
+                        <h2 class="card-title">Event Mendatang</h2>
                     </div>
+                    {% for e in upcoming_events_list %}
                     <div class="list-item">
                         <div>
-                            <p class="item-title">Summer Music Festival 2026</p>
-                            <span class="badge badge-primary">On Sale</span>
+                            <p class="item-title">{{ e.event_title }}</p>
+                            <span class="badge badge-primary">{{ e.event_datetime }}</span>
                         </div>
-                        <span class="badge">VIP Available</span>
                     </div>
-                    <div class="list-item">
-                        <div>
-                            <p class="item-title">Tech Conference Indonesia</p>
-                            <span class="badge badge-primary">On Sale</span>
-                        </div>
-                        <span class="badge">Early Bird</span>
-                    </div>
-                    <div class="list-item">
-                        <div>
-                            <p class="item-title">Comedy Night Special</p>
-                            <span class="badge">Coming Soon</span>
-                        </div>
-                        <span class="badge">Standard</span>
-                    </div>
+                    {% empty %}
+                    <p style="color:var(--text-secondary);font-size:0.875rem;">Tidak ada event mendatang.</p>
+                    {% endfor %}
                 </div>
                 <div class="card">
                     <div class="card-header">

@@ -17,72 +17,49 @@
             <div class="bento-grid">
                 <div class="bento-card stat-card">
                     <span class="stat-label">My Events</span>
-                    <span class="stat-value">8</span>
-                    <span class="stat-change positive">+2 this month</span>
+                    <span class="stat-value">{{ stats.my_events }}</span>
                 </div>
                 <div class="bento-card stat-card">
                     <span class="stat-label">Tickets Sold</span>
-                    <span class="stat-value">342</span>
-                    <span class="stat-change positive">+24 this week</span>
+                    <span class="stat-value">{{ stats.tickets_sold }}</span>
                 </div>
                 <div class="bento-card stat-card">
                     <span class="stat-label">My Venues</span>
-                    <span class="stat-value">5</span>
-                    <span class="stat-change positive">+1 new</span>
+                    <span class="stat-value">{{ stats.my_venues }}</span>
                 </div>
                 <div class="bento-card stat-card">
                     <span class="stat-label">Revenue</span>
-                    <span class="stat-value">$12.4K</span>
-                    <span class="stat-change positive">+18% this month</span>
+                    <span class="stat-value">{{ stats.revenue }}</span>
                 </div>
                 <div class="bento-card stat-card">
                     <span class="stat-label">Pending Orders</span>
-                    <span class="stat-value">17</span>
+                    <span class="stat-value">{{ stats.pending_orders }}</span>
                     <span class="stat-change">Needs attention</span>
                 </div>
                 <div class="bento-card stat-card">
                     <span class="stat-label">Active Promos</span>
-                    <span class="stat-value">4</span>
-                    <span class="stat-change positive">+1 this week</span>
+                    <span class="stat-value">{{ stats.active_promos }}</span>
                 </div>
                 <div class="bento-card stat-card">
                     <span class="stat-label">Artists</span>
-                    <span class="stat-value">12</span>
-                    <span class="stat-change positive">+3 this month</span>
-                </div>
-                <div class="bento-card stat-card">
-                    <span class="stat-label">Ticket Categories</span>
-                    <span class="stat-value">6</span>
-                    <span class="stat-change positive">All active</span>
+                    <span class="stat-value">{{ stats.total_artists }}</span>
                 </div>
             </div>
             <div class="grid grid-cols-3" style="gap: 24px;">
                 <div class="card" style="grid-column: span 2;">
                     <div class="card-header">
-                        <h2 class="card-title">My Events</h2>
-                        <button class="btn btn-primary">+ Create Event</button>
+                        <h2 class="card-title">Event Saya</h2>
                     </div>
+                    {% for e in recent_events %}
                     <div class="list-item">
                         <div>
-                            <p class="item-title">Summer Music Festival 2026</p>
-                            <span class="badge badge-primary">Active</span>
+                            <p class="item-title">{{ e.event_title }}</p>
+                            <span class="badge badge-primary">{{ e.event_datetime }}</span>
                         </div>
-                        <span class="badge">High</span>
                     </div>
-                    <div class="list-item">
-                        <div>
-                            <p class="item-title">Tech Conference Indonesia</p>
-                            <span class="badge badge-primary">Active</span>
-                        </div>
-                        <span class="badge">Medium</span>
-                    </div>
-                    <div class="list-item">
-                        <div>
-                            <p class="item-title">Comedy Night Special</p>
-                            <span class="badge">Draft</span>
-                        </div>
-                        <span class="badge">Low</span>
-                    </div>
+                    {% empty %}
+                    <p style="color:var(--text-secondary);font-size:0.875rem;">Belum ada event.</p>
+                    {% endfor %}
                 </div>
                 <div class="card">
                     <div class="card-header">
