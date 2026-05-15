@@ -1,4 +1,5 @@
 import json
+import re
 from datetime import date, timedelta
 
 from django.shortcuts import render, redirect
@@ -38,14 +39,12 @@ def _redirect_dashboard(role: str):
 
 def _clean_db_error(error: Exception) -> str:
     """Extract user-facing message from a PostgreSQL trigger/stored-proc error."""
-    msg = str(error)
-    for line in msg.split('\n'):
-        line = line.strip()
-        # PostgreSQL prepends 'ERROR:  ' — match anywhere 'Error:' appears
-        if 'Error:' in line:
-            idx = line.index('Error:')
-            return line[idx:].replace('Error:', 'ERROR:', 1)
-    return msg.split('\n')[0].strip()
+    first_line = str(error).split('\n')[0].strip()
+    text = re.sub(r'^ERROR:\s{2,}', '', first_line)
+    if text == first_line:
+        return first_line
+    text = re.sub(r'^[Ee][Rr][Rr][Oo][Rr]:\s*', '', text)
+    return 'ERROR: ' + text
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -460,7 +459,7 @@ def promotion(request):
                         promo.update_promotion(promotion_id, promo_code, discount_type, discount_value, start_date, end_date, usage_limit)
                         messages.success(request, 'Promo berhasil diperbarui.')
         except Exception as e:
-            messages.error(request, _clean_db_error(e) if 'Error:' in str(e) else str(e))
+            messages.error(request, _clean_db_error(e))
 
         return redirect(f'{request.path}?role=admin')
 
