@@ -262,6 +262,17 @@
         color: white;
     }
 
+    .seat-disabled {
+        grid-column: 1 / -1;
+        padding: 12px;
+        background: #FFFFFF;
+        border: 1px dashed var(--border);
+        border-radius: 6px;
+        color: var(--text-secondary);
+        text-align: center;
+        font-weight: 500;
+    }
+
     /* Promo Code */
     .promo-input-wrapper {
         display: flex;
@@ -408,8 +419,13 @@
 <div class="layout checkout-layout">
     {% include 'core/_sidebar.html' with role='customer' active='tickets' user_name='TikTakTuk User' user_role='Customer' %}
     <main class="main-content">
-        <div class="checkout-wrapper">
-            
+        <form id="checkout-form" method="post" class="checkout-wrapper">
+            {% csrf_token %}
+            <input type="hidden" name="event_id" value="{{ event.event_id }}" />
+            <input type="hidden" name="category_id" id="category-id" value="{{ form_data.selected_category_id|default:'' }}" />
+            <input type="hidden" name="quantity" id="quantity-field" value="{{ form_data.quantity|default:2 }}" />
+            <input type="hidden" name="seat_ids" id="seat-ids" value="{{ form_data.selected_seat_ids|default:'' }}" />
+
             <!-- Left Column: Main Content -->
             <div class="checkout-main">
                 
@@ -436,11 +452,12 @@
                     <div class="ticket-categories">
                         {% for category in ticket_categories %}
                         <div class="ticket-category-item" 
-                             data-name="{{ category.name }}" 
+                             data-id="{{ category.category_id }}"
+                             data-name="{{ category.category_name }}" 
                              data-price="{{ category.price }}" 
                              onclick="selectTicketCategory(this)">
                             <div class="ticket-info-left">
-                                <span class="ticket-category-name">{{ category.name }}</span>
+                                <span class="ticket-category-name">{{ category.category_name }}</span>
                                 <span class="ticket-quota">Kuota: {{ category.quota|default:"500" }} tiket</span>
                             </div>
                             <div class="ticket-info-right">
@@ -498,9 +515,9 @@
                     <div class="card">
                         <div class="section-title">Jumlah Tiket</div>
                         <div class="quantity-control">
-                            <button class="quantity-btn" onclick="decreaseQuantity()">−</button>
+                            <button type="button" class="quantity-btn" onclick="(function(e){e && e.preventDefault(); decreaseQuantity();})(event)">−</button>
                             <span class="quantity-display" id="quantity-display">2</span>
-                            <button class="quantity-btn" onclick="increaseQuantity()">+</button>
+                            <button type="button" class="quantity-btn" onclick="(function(e){e && e.preventDefault(); increaseQuantity();})(event)">+</button>
                         </div>
                         <p style="font-size: 0.7rem; color: var(--text-secondary);">Max 10 tiket per transaksi</p>
                     </div>
@@ -508,19 +525,23 @@
                     <div class="card">
                         <div class="section-title">Pilih Kursi</div>
                         <div class="seating-grid" id="seating-grid">
-                            <div class="seat" onclick="toggleSeat(this)">A1</div>
-                            <div class="seat" onclick="toggleSeat(this)">A2</div>
-                            <div class="seat" onclick="toggleSeat(this)">A3</div>
-                            <div class="seat" onclick="toggleSeat(this)">A4</div>
-                            <div class="seat" onclick="toggleSeat(this)">B1</div>
-                            <div class="seat" onclick="toggleSeat(this)">B2</div>
-                            <div class="seat" onclick="toggleSeat(this)">B3</div>
-                            <div class="seat" onclick="toggleSeat(this)">B4</div>
-                            <div class="seat" onclick="toggleSeat(this)">C1</div>
-                            <div class="seat" onclick="toggleSeat(this)">C2</div>
-                            <div class="seat" onclick="toggleSeat(this)">C3</div>
-                            <div class="seat" onclick="toggleSeat(this)">C4</div>
+                            {% if available_seats %}
+                                {% for seat in available_seats %}
+                                <div class="seat" 
+                                     data-id="{{ seat.seat_id }}"
+                                     data-section="{{ seat.section }}"
+                                     data-row="{{ seat.row_number }}"
+                                     data-number="{{ seat.seat_number }}"
+                                     data-label="{{ seat.section }} {{ seat.row_number }}{{ seat.seat_number }}"
+                                     onclick="toggleSeat(this)">
+                                    {{ seat.section }} {{ seat.row_number }}{{ seat.seat_number }}
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="seat-disabled">Tidak ada data kursi tersedia untuk event ini.</div>
+                            {% endif %}
                         </div>
+                        <div class="seat-error" id="seat-error"></div>
                     </div>
                 </div>
 
@@ -528,8 +549,8 @@
                 <div class="card">
                     <div class="section-title">Kode Promo</div>
                     <div class="promo-input-wrapper">
-                        <input type="text" class="promo-input" id="promo-code" placeholder="CONTOH: TIKTAK20" />
-                        <button class="promo-apply-btn" onclick="applyPromo()">Terapkan</button>
+                        <input type="text" class="promo-input" id="promo-code" name="promo_code" placeholder="CONTOH: TIKTAK20" value="{{ form_data.promo_code|default:'' }}" />
+                        <button class="promo-apply-btn" type="button" onclick="applyPromo()">Terapkan</button>
                     </div>
                     <div class="promo-error" id="promo-error"></div>
                 </div>
@@ -547,10 +568,16 @@
                             <span id="summary-price">Rp 500,000</span>
                         </div>
 
-                        <div class="summary-row">
-                            <span>Biaya Layanan</span>
-                            <span>Rp 0</span>
+                        <div class="summary-row" id="summary-promo-row" style="display:none;">
+                            <span>Promo</span>
+                            <span id="summary-promo-value">-</span>
                         </div>
+
+                        <div class="summary-row" id="summary-discount-row" style="display:none;">
+                            <span>Diskon</span>
+                            <span id="summary-discount-value">-Rp 0</span>
+                        </div>
+
                     </div>
 
                     <div class="summary-divider"></div>
@@ -560,7 +587,7 @@
                         <span id="total-amount">Rp 500,000</span>
                     </div>
 
-                    <button class="buy-btn" id="buy-btn" onclick="completePurchase()">Bayar Sekarang</button>
+                    <button class="buy-btn" id="buy-btn" type="submit" name="action" value="checkout">Bayar Sekarang</button>
                     <p class="disclaimer">Konfirmasi tiket akan dikirim ke admin@example.com</p>
                 </div>
             </div>
@@ -569,90 +596,288 @@
     </main>
 </div>
 
+{{ promotions|json_script:"promotions-data" }}
+{{ event_date|json_script:"event-date-data" }}
+
 <script>
-    let selectedCategory = 'Category 2';
-    let selectedPrice = 250000;
-    let quantity = 2;
-    let selectedSeats = [];
+/* Refactored checkout JS: central state, stable helpers, expose public functions used by inline handlers */
+(function () {
+    const state = {
+        selectedCategory: '',
+        selectedCategoryId: '',
+        selectedPrice: 0,
+        quantity: 2,
+        selectedSeats: [],
+        appliedPromo: null,
+    };
+
+    const $ = id => document.getElementById(id);
+    const promotions = JSON.parse(document.getElementById('promotions-data').textContent || '[]').map(item => ({
+        ...item,
+        discount_type: normalizeDiscountType(item.discount_type),
+        discount_value: Number(item.discount_value) || 0,
+        usage_count: Number(item.usage_count) || 0,
+        usage_limit: Number(item.usage_limit) || 0,
+    }));
+    const eventDate = JSON.parse(document.getElementById('event-date-data').textContent || '""');
+
+    function normalizeSection(value) {
+        return (value || '').toString().trim().toUpperCase().replace(/\s+/g, '').replace('CATEGORY', 'CAT');
+    }
+
+    function categoryMatchesSection(categoryName, sectionName) {
+        const catNorm = normalizeSection(categoryName);
+        const secNorm = normalizeSection(sectionName);
+        if (!catNorm || !secNorm) return false;
+        if (catNorm === secNorm) return true;
+        if (catNorm.startsWith('CAT') && secNorm.startsWith('CAT')) return catNorm === secNorm;
+        return false;
+    }
+
+    function setSeatError(message) {
+        const el = $('seat-error'); if (!el) return; el.textContent = message; el.style.color = '#EF4444';
+    }
+    function clearSeatError() { const el = $('seat-error'); if (el) el.textContent = ''; }
+
+    function clearPromoError() { const el = $('promo-error'); if (el) el.textContent = ''; }
+
+    function setPromoError(message) {
+        const el = $('promo-error');
+        if (!el) return;
+        el.style.color = '#EF4444';
+        el.textContent = message;
+    }
+
+    function parseDate(value) {
+        if (!value) return null;
+        const parsed = new Date(value);
+        return Number.isNaN(parsed.getTime()) ? null : parsed;
+    }
+
+    function formatCurrency(value) {
+        return `Rp ${Math.round(value).toLocaleString('en-US')}`;
+    }
+
+    function normalizeDiscountType(value) {
+        const normalized = (value || '').toString().trim().toLowerCase();
+        if (normalized === 'percentage' || normalized === 'persentase' || normalized === 'percent') {
+            return 'percentage';
+        }
+        return 'nominal';
+    }
+
+    function getAppliedPromoDiscount(subtotal) {
+        if (!state.appliedPromo) return 0;
+        const promoItem = state.appliedPromo;
+        if (normalizeDiscountType(promoItem.discount_type) === 'percentage') {
+            return subtotal * (Number(promoItem.discount_value) / 100);
+        }
+        return Number(promoItem.discount_value) || 0;
+    }
+
+    function findPromoByCode(promoCode) {
+        const normalizedCode = (promoCode || '').trim().toLowerCase();
+        return promotions.find(promoItem => (promoItem.promo_code || '').toLowerCase() === normalizedCode) || null;
+    }
+
+    function updateSeatInput() { const el = $('seat-ids'); if (el) el.value = state.selectedSeats.join(','); }
+
+    function renderSeats() {
+        const seatElements = Array.from(document.querySelectorAll('.seat[data-id]'));
+        let visibleCount = 0;
+        seatElements.forEach(el => {
+            const section = el.dataset.section || '';
+            const matches = categoryMatchesSection(state.selectedCategory, section);
+            el.style.display = matches ? 'flex' : 'none';
+            if (matches) visibleCount++;
+            if (!matches && el.classList.contains('selected')) {
+                el.classList.remove('selected');
+                state.selectedSeats = state.selectedSeats.filter(id => id !== el.dataset.id);
+            }
+        });
+        if (visibleCount === 0) seatElements.forEach(el => el.style.display = 'flex');
+        updateSeatInput();
+    }
 
     function selectTicketCategory(element) {
-        document.querySelectorAll('.ticket-category-item').forEach(item => {
-            item.classList.remove('selected');
-        });
-
+        if (!element) return;
+        document.querySelectorAll('.ticket-category-item').forEach(item => item.classList.remove('selected'));
         element.classList.add('selected');
-        
-        selectedCategory = element.getAttribute('data-name');
-        selectedPrice = parseInt(element.getAttribute('data-price')) || 0;
+        state.selectedCategory = element.getAttribute('data-name') || '';
+        // prefer explicit data-id, fallback to data-name so UI can work with placeholder/demo items
+        state.selectedCategoryId = element.getAttribute('data-id') || element.getAttribute('data-name') || '';
+        state.selectedPrice = parseInt(element.getAttribute('data-price')) || 0;
+        const catInput = $('category-id'); if (catInput) catInput.value = state.selectedCategoryId;
+        // clear seats when changing category
+        state.selectedSeats = [];
+        document.querySelectorAll('.seat.selected').forEach(el => el.classList.remove('selected'));
+        updateSeatInput(); clearSeatError(); renderSeats(); updateSummary();
+    }
 
+    function changeQuantity(delta) {
+        const min = 1, max = 10;
+        const newQ = Math.min(max, Math.max(min, state.quantity + delta));
+        if (newQ === state.quantity) return;
+        state.quantity = newQ;
+        const disp = $('quantity-display'); if (disp) disp.textContent = state.quantity;
+        const field = $('quantity-field'); if (field) field.value = state.quantity;
+        if (state.selectedSeats.length > state.quantity) {
+            const toRemove = state.selectedSeats.splice(state.quantity);
+            toRemove.forEach(seatId => {
+                const seatEl = document.querySelector(`.seat[data-id="${seatId}"]`);
+                if (seatEl) seatEl.classList.remove('selected');
+            });
+            updateSeatInput(); setSeatError('Jumlah kursi disesuaikan dengan jumlah tiket.');
+        } else {
+            clearSeatError();
+        }
         updateSummary();
-    }
-
-    function increaseQuantity() {
-        if (quantity < 10) {
-            quantity++;
-            document.getElementById('quantity-display').textContent = quantity;
-            updateSummary();
-        }
-    }
-
-    function decreaseQuantity() {
-        if (quantity > 1) {
-            quantity--;
-            document.getElementById('quantity-display').textContent = quantity;
-            updateSummary();
-        }
     }
 
     function toggleSeat(element) {
-        element.classList.toggle('selected');
-
+        if (!element) return;
+        const seatId = element.dataset.id;
         if (element.classList.contains('selected')) {
-            selectedSeats.push(element.textContent);
+            element.classList.remove('selected');
+            state.selectedSeats = state.selectedSeats.filter(id => id !== seatId);
+            clearSeatError();
         } else {
-            selectedSeats = selectedSeats.filter(seat => seat !== element.textContent);
+            if (state.selectedSeats.length >= state.quantity) { setSeatError(`Anda hanya dapat memilih maksimal ${state.quantity} kursi.`); return; }
+            element.classList.add('selected'); state.selectedSeats.push(seatId); clearSeatError();
         }
-
-        updateSummary();
+        updateSeatInput(); updateSummary();
     }
 
     function applyPromo() {
-        const promoCode = document.getElementById('promo-code').value;
-        const errorDiv = document.getElementById('promo-error');
-
-        if (!promoCode.trim()) {
-            errorDiv.textContent = 'Masukkan kode promo';
+        const promoField = $('promo-code'); const errorDiv = $('promo-error');
+        if (!promoField || !errorDiv) return;
+        const promoCode = (promoField.value || '').trim();
+        if (!promoCode) {
+            state.appliedPromo = null;
+            setPromoError('Masukkan kode promo.');
+            updateSummary();
             return;
         }
 
-        if (promoCode === 'CONTOH: TIKTAK20') {
-            errorDiv.style.color = '#10B981';
-            errorDiv.textContent = 'Kode promo berhasil diterapkan!';
-        } else {
-            errorDiv.style.color = '#EF4444'; 
-            errorDiv.textContent = 'Kode promo tidak valid.';
+        const promoItem = findPromoByCode(promoCode);
+        if (!promoItem) {
+            state.appliedPromo = null;
+            setPromoError(`Kode promo "${promoCode}" tidak ditemukan.`);
+            updateSummary();
+            return;
         }
+
+        const targetDate = parseDate(eventDate);
+        const promoStart = parseDate(promoItem.start_date);
+        const promoEnd = parseDate(promoItem.end_date);
+        if (targetDate && promoStart && targetDate < promoStart) {
+            state.appliedPromo = null;
+            setPromoError(`Promo "${promoItem.promo_code}" tidak berlaku untuk tanggal event ini.`);
+            updateSummary();
+            return;
+        }
+        if (targetDate && promoEnd && targetDate > promoEnd) {
+            state.appliedPromo = null;
+            setPromoError(`Promo "${promoItem.promo_code}" tidak berlaku untuk tanggal event ini.`);
+            updateSummary();
+            return;
+        }
+        if (Number(promoItem.usage_count) >= Number(promoItem.usage_limit)) {
+            state.appliedPromo = null;
+            setPromoError(`Promotion "${promoItem.promo_code}" telah mencapai batas maksimum penggunaan.`);
+            updateSummary();
+            return;
+        }
+
+        state.appliedPromo = promoItem;
+        clearPromoError();
+        updateSummary();
     }
 
     function updateSummary() {
-        const categoryDisplay = selectedCategory || 'Pilih kategori tiket';
-        const price = selectedPrice * quantity;
+        const categoryDisplay = state.selectedCategory || 'Pilih kategori tiket';
+        const subtotal = (state.selectedPrice || 0) * state.quantity;
+        const discount = Math.min(getAppliedPromoDiscount(subtotal), subtotal);
+        const total = subtotal - discount;
+        const sumCat = $('summary-category'); if (sumCat) sumCat.textContent = `${categoryDisplay} × ${state.quantity}`;
+        const sumPrice = $('summary-price'); if (sumPrice) sumPrice.textContent = formatCurrency(subtotal);
 
-        document.getElementById('summary-category').textContent = `${categoryDisplay} × ${quantity}`;
-        document.getElementById('summary-price').textContent = `Rp ${price.toLocaleString('en-US')}`;
-        document.getElementById('total-amount').textContent = `Rp ${price.toLocaleString('en-US')}`;
+        const promoRow = $('summary-promo-row');
+        const promoValue = $('summary-promo-value');
+        const discountRow = $('summary-discount-row');
+        const discountValue = $('summary-discount-value');
 
-        const buyBtn = document.getElementById('buy-btn');
-        buyBtn.disabled = !selectedCategory || quantity === 0;
-    }
-
-    function completePurchase() {
-        if (!selectedCategory) {
-            alert('Pilih kategori tiket terlebih dahulu');
-            return;
+        if (state.appliedPromo) {
+            if (promoRow) promoRow.style.display = 'flex';
+            if (promoValue) {
+                const promoLabel = normalizeDiscountType(state.appliedPromo.discount_type) === 'percentage'
+                    ? `${state.appliedPromo.promo_code} (-${Number(state.appliedPromo.discount_value)}%)`
+                    : `${state.appliedPromo.promo_code} (-${formatCurrency(Number(state.appliedPromo.discount_value))})`;
+                promoValue.textContent = promoLabel;
+            }
+            if (discountRow) discountRow.style.display = 'flex';
+            if (discountValue) discountValue.textContent = `-${formatCurrency(discount)}`;
+        } else {
+            if (promoRow) promoRow.style.display = 'none';
+            if (discountRow) discountRow.style.display = 'none';
+            if (promoValue) promoValue.textContent = '-';
+            if (discountValue) discountValue.textContent = '-Rp 0';
         }
 
-        alert(`Pesanan berhasil dibuat!\n- Kategori: ${selectedCategory}\n- Jumlah: ${quantity}\n- Kursi: ${selectedSeats.length > 0 ? selectedSeats.join(', ') : 'Belum memilih kursi'}`);
+        const totalEl = $('total-amount'); if (totalEl) totalEl.textContent = formatCurrency(total);
+        const buyBtn = $('buy-btn'); if (buyBtn) buyBtn.disabled = !state.selectedCategoryId || state.quantity === 0 || state.selectedSeats.length > state.quantity;
     }
+
+    function completePurchase() { const form = $('checkout-form'); if (form) form.submit(); }
+
+    function restoreSelectedSeats() {
+        const seatIdsRaw = '{{ form_data.selected_seat_ids|default:'' }}';
+        if (!seatIdsRaw) return;
+        const seatIds = seatIdsRaw.split(',').map(s => s.trim()).filter(Boolean);
+        const seatElements = Array.from(document.querySelectorAll('.seat[data-id]'));
+        seatElements.forEach(el => { if (seatIds.includes(el.dataset.id)) { el.classList.add('selected'); if (!state.selectedSeats.includes(el.dataset.id)) state.selectedSeats.push(el.dataset.id); } });
+        updateSeatInput();
+    }
+
+    // expose public functions for inline handlers
+    window.selectTicketCategory = selectTicketCategory;
+    window.increaseQuantity = function () { changeQuantity(1); };
+    window.decreaseQuantity = function () { changeQuantity(-1); };
+    window.toggleSeat = toggleSeat;
+    window.applyPromo = applyPromo;
+    window.completePurchase = completePurchase;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const initialSelectedCategoryId = '{{ form_data.selected_category_id|default:'' }}';
+        let initialQuantity = {{ form_data.quantity|default:2 }};
+        const initialPromoCode = '{{ form_data.promo_code|default:'' }}';
+        try { console.debug('checkout init', { initialSelectedCategoryId, initialQuantity }); } catch (e) {}
+        // clamp initial quantity within allowed bounds to avoid odd client-side state
+        if (typeof initialQuantity !== 'number') {
+            initialQuantity = parseInt(initialQuantity) || 2;
+        }
+        if (initialQuantity < 1) initialQuantity = 1;
+        if (initialQuantity > 10) initialQuantity = 10;
+        if (initialQuantity && initialQuantity > 0) { state.quantity = initialQuantity; const d = $('quantity-display'); if (d) d.textContent = state.quantity; const f = $('quantity-field'); if (f) f.value = state.quantity; }
+        const promoField = $('promo-code'); if (promoField) promoField.value = initialPromoCode;
+        if (initialPromoCode) {
+            state.appliedPromo = findPromoByCode(initialPromoCode);
+        }
+        if (initialSelectedCategoryId) {
+            const selectedCard = document.querySelector(`.ticket-category-item[data-id="${initialSelectedCategoryId}"]`);
+            if (selectedCard) selectTicketCategory(selectedCard);
+        } else {
+            // Prefer an element that already has the `selected` class in the DOM
+            const domSelected = document.querySelector('.ticket-category-item.selected');
+            if (domSelected) {
+                selectTicketCategory(domSelected);
+            } else {
+                const firstCategory = document.querySelector('.ticket-category-item');
+                if (firstCategory) selectTicketCategory(firstCategory);
+            }
+        }
+        restoreSelectedSeats(); updateSummary();
+    });
+})();
 </script>
 {% endblock %}

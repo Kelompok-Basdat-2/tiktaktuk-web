@@ -8,6 +8,8 @@ from django.utils import timezone
 from . import auth
 from . import tickets as tkt
 from . import artists as art
+from . import orders as od
+from . import promotions as promo
 from . import ticket_categories as tc_mod
 from . import venues as vn
 from . import events as ev
@@ -41,7 +43,7 @@ def _clean_db_error(error: Exception) -> str:
         # PostgreSQL prepends 'ERROR:  ' — match anywhere 'Error:' appears
         if 'Error:' in line:
             idx = line.index('Error:')
-            return line[idx:]
+            return line[idx:].replace('Error:', 'ERROR:', 1)
     return msg.split('\n')[0].strip()
 
 
@@ -231,98 +233,43 @@ def dashboard_customer(request):
 
 
 def order(request):
-    """Order list page - frontend only."""
+    """Order list page."""
     role = (request.GET.get('role') or 'customer').strip().lower()
     if role not in {'admin', 'organizer', 'customer', 'guest'}:
         role = 'customer'
 
-    orders = {
-        'customer': [
-            {
-                'id': 'ord_001',
-                'customer': 'You',
-                'date': '2024-04-10 14:32',
-                'status': 'Lunas',
-                'status_key': 'paid',
-                'total': 'Rp 1,200,000',
-            },
-            {
-                'id': 'ord_002',
-                'customer': 'You',
-                'date': '2024-04-11 09:15',
-                'status': 'Lunas',
-                'status_key': 'paid',
-                'total': 'Rp 150,000',
-            },
-        ],
-        'organizer': [
-            {
-                'id': 'ord_001',
-                'customer': 'Budi Santoso',
-                'date': '2024-04-10 14:32',
-                'status': 'Lunas',
-                'status_key': 'paid',
-                'total': 'Rp 1,200,000',
-            },
-            {
-                'id': 'ord_002',
-                'customer': 'Budi Santoso',
-                'date': '2024-04-11 09:15',
-                'status': 'Lunas',
-                'status_key': 'paid',
-                'total': 'Rp 150,000',
-            },
-            {
-                'id': 'ord_003',
-                'customer': 'Siti Rahayu',
-                'date': '2024-04-12 18:44',
-                'status': 'Pending',
-                'status_key': 'pending',
-                'total': 'Rp 1,500,000',
-            },
-        ],
-        'admin': [
-            {
-                'id': 'ord_001',
-                'customer': 'Budi Santoso',
-                'date': '2024-04-10 14:32',
-                'status': 'Lunas',
-                'status_key': 'paid',
-                'total': 'Rp 1,200,000',
-            },
-            {
-                'id': 'ord_002',
-                'customer': 'Budi Santoso',
-                'date': '2024-04-11 09:15',
-                'status': 'Lunas',
-                'status_key': 'paid',
-                'total': 'Rp 150,000',
-            },
-            {
-                'id': 'ord_003',
-                'customer': 'Siti Rahayu',
-                'date': '2024-04-12 18:44',
-                'status': 'Pending',
-                'status_key': 'pending',
-                'total': 'Rp 1,500,000',
-            },
-            {
-                'id': 'ord_004',
-                'customer': 'Siti Rahayu',
-                'date': '2024-04-13 11:00',
-                'status': 'Dibatalkan',
-                'status_key': 'cancelled',
-                'total': 'Rp 700,000',
-            },
-        ],
-        'guest': [],
-    }
+    user = _session_user(request)
+    if role == 'admin':
+        current_orders = od.get_all_orders()
+    elif role == 'organizer':
+        current_orders = od.get_orders_by_organizer(user['user_id']) if user else []
+    elif role == 'customer':
+        current_orders = od.get_orders_by_customer(user['user_id']) if user else []
+    else:
+        current_orders = []
 
-    current_orders = orders.get(role, orders['customer'])
+    for order_item in current_orders:
+        order_item['id'] = order_item['order_id']
+        order_item['customer'] = order_item['customer_name']
+        order_item['date'] = order_item['order_date'].strftime('%Y-%m-%d %H:%M')
+        normalized_status = order_item['payment_status'].lower()
+        if normalized_status == 'lunas':
+            order_item['status_key'] = 'paid'
+        elif normalized_status == 'dibatalkan':
+            order_item['status_key'] = 'cancelled'
+        else:
+            order_item['status_key'] = normalized_status
+        order_item['status'] = normalized_status
+        order_item['total'] = f'Rp {order_item["total_amount"]:,.0f}'.replace(',', '.')
+
     total_order = len(current_orders)
     paid_count = sum(1 for order_item in current_orders if order_item['status_key'] == 'paid')
     pending_count = sum(1 for order_item in current_orders if order_item['status_key'] == 'pending')
-    total_revenue = 'Rp 1,350,000' if role in {'admin', 'organizer'} else None
+    total_revenue = (
+        f'Rp {sum(order_item["total_amount"] for order_item in current_orders):,.0f}'.replace(',', '.')
+        if role in {'admin', 'organizer'} and current_orders
+        else None
+    )
 
     return render(
         request,
@@ -357,45 +304,26 @@ def promotion(request):
     if role not in {'admin', 'organizer', 'customer', 'guest'}:
         role = 'guest'
 
-    today = date.today()
-    promotions = [
-        {
-            'id': 'PR001',
-            'promo_code': 'TIKTAK20',
-            'discount_type': 'percentage',
-            'discount_type_label': 'Persentase',
-            'discount_value_display': '20%',
-            'start_date': '2024-01-01',
-            'end_date': '2024-12-31',
-            'usage': '45 / 100',
-            'status': 'active',
-            'status_label': 'Aktif',
-        },
-        {
-            'id': 'PR002',
-            'promo_code': 'HEMAT50K',
-            'discount_type': 'nominal',
-            'discount_type_label': 'Nominal',
-            'discount_value_display': 'Rp 50,000',
-            'start_date': '2024-01-01',
-            'end_date': '2024-12-31',
-            'usage': '12 / 50',
-            'status': 'inactive',
-            'status_label': 'Nominal',
-        },
-        {
-            'id': 'PR003',
-            'promo_code': 'NEWUSER30',
-            'discount_type': 'percentage',
-            'discount_type_label': 'Persentase',
-            'discount_value_display': '30%',
-            'start_date': '2024-03-01',
-            'end_date': '2024-06-30',
-            'usage': '87 / 200',
-            'status': 'active',
-            'status_label': 'Aktif',
-        },
-    ]
+    raw_promotions = promo.get_promotions()
+    promotions = []
+    for promotion_item in raw_promotions:
+        discount_type = promotion_item['discount_type'].lower()
+        promotions.append({
+            'id': promotion_item['promotion_id'],
+            'promo_code': promotion_item['promo_code'],
+            'discount_type': discount_type,
+            'discount_type_label': 'Persentase' if discount_type == 'percentage' else 'Nominal',
+            'discount_value_display': (
+                f'{promotion_item["discount_value"]:.0f}%'
+                if discount_type == 'percentage'
+                else f'Rp {promotion_item["discount_value"]:,.0f}'.replace(',', '.')
+            ),
+            'start_date': promotion_item['start_date'].isoformat(),
+            'end_date': promotion_item['end_date'].isoformat(),
+            'usage': f'{promotion_item["usage_count"]} / {promotion_item["usage_limit"]}',
+            'status': 'active' if promotion_item['start_date'] <= date.today() <= promotion_item['end_date'] else 'expired',
+            'status_label': 'Aktif' if promotion_item['start_date'] <= date.today() <= promotion_item['end_date'] else 'Tidak Aktif',
+        })
 
     stats = {
         'total_promo': len(promotions),
@@ -1061,36 +989,123 @@ def artist_delete(request, id):
 
 
 def checkout(request):
-    """Checkout page - order creation/ticket purchase - frontend only."""
-    # Mock event data
+    """Checkout page - order creation/ticket purchase."""
+    user = _session_user(request)
+    if not user:
+        return redirect('core:login')
+
+    role = auth.get_primary_role(user['user_id'])
+    if role != 'customer':
+        return _redirect_dashboard(role) if role else redirect('core:login')
+
+    profile = auth.get_customer_profile(user['user_id'])
+    if not profile:
+        messages.error(request, 'Profil customer tidak ditemukan.')
+        return redirect('core:login')
+
+    event_id = request.GET.get('event_id') or request.POST.get('event_id')
+    event_data = ev.get_event_by_id(event_id) if event_id else None
+    if not event_data:
+        messages.error(request, 'Event tidak ditemukan.')
+        return redirect('core:event_customer')
+
+    venue = vn.get_venue_by_id(event_data['venue_id'])
     event = {
-        'id': 'evt_001',
-        'name': 'Konser Melodi Senja',
-        'category': 'Musik',
-        'date': '25 Mei 2026',
-        'time': '19:00',
-        'venue': 'Jakarta Convention Center',
-        'image': '#',
+        'event_id': event_data['event_id'],
+        'name': event_data['event_title'],
+        'date': _format_event_date(_ensure_event_datetime(event_data['event_datetime'])),
+        'venue': venue['venue_name'] if venue else 'Unknown Venue',
     }
 
-    # Mock ticket categories
-    ticket_categories = [
-        {'id': 'cat_1', 'name': 'VVIP', 'price': 1500000, 'available': 50},
-        {'id': 'cat_2', 'name': 'VIP', 'price': 750000, 'available': 80},
-        {'id': 'cat_3', 'name': 'Category 1', 'price': 450000, 'available': 300},
-        {'id': 'cat_4', 'name': 'Category 2', 'price': 250000, 'available': 500},
-    ]
-
-    # Mock seating
-    seating = {
-        'rows': ['A1', 'A2', 'A3', 'A4', 'B1', 'B2', 'B3', 'B4', 'C1', 'C2', 'C3', 'C4'],
+    ticket_categories = tkt.get_categories_for_event(event_id)
+    available_seats = tkt.get_seats_for_venue(event_data['venue_id']) if venue else []
+    promotions = promo.get_promotions()
+    event_dt = _ensure_event_datetime(event_data['event_datetime'])
+    form_data = {
+        'selected_category_id': '',
+        'quantity': 2,
+        'promo_code': '',
+        'selected_seat_ids': '',
     }
 
-    return render(request, 'core/checkout.html', {
-        'event': event,
-        'ticket_categories': ticket_categories,
-        'seating': seating,
-    })
+    def render_checkout():
+        return render(request, 'core/checkout.html', {
+            'event': event,
+            'ticket_categories': ticket_categories,
+            'available_seats': available_seats,
+            'promotions': promotions,
+            'event_date': event_dt.date().isoformat() if event_dt else '',
+            'form_data': form_data,
+        })
+
+    if request.method == 'POST':
+        action = (request.POST.get('action') or 'checkout').strip()
+        category_id = (request.POST.get('category_id') or '').strip()
+        quantity_raw = request.POST.get('quantity') or '1'
+        promo_code = (request.POST.get('promo_code') or '').strip()
+        seat_ids_raw = (request.POST.get('seat_ids') or '').strip()
+
+        form_data['selected_category_id'] = category_id
+        form_data['promo_code'] = promo_code
+        form_data['selected_seat_ids'] = seat_ids_raw
+
+        try:
+            quantity = int(quantity_raw)
+            if quantity < 1 or quantity > 10:
+                raise ValueError('Jumlah tiket harus berada di antara 1 dan 10.')
+            form_data['quantity'] = quantity
+        except ValueError:
+            messages.error(request, 'Jumlah tiket tidak valid.')
+            return render_checkout()
+
+        if not category_id:
+            messages.error(request, 'Pilih kategori tiket terlebih dahulu.')
+            return render_checkout()
+
+        category = tc_mod.get_ticket_category_by_id(category_id)
+        if not category or category['tevent_id'] != event_id:
+            messages.error(request, 'Kategori tiket tidak valid untuk event ini.')
+            return render_checkout()
+
+        seat_ids = [seat_id for seat_id in seat_ids_raw.split(',') if seat_id.strip()]
+        if seat_ids and len(seat_ids) != quantity:
+            messages.error(request, 'Jumlah kursi harus sama dengan jumlah tiket.')
+            return render_checkout()
+
+        available_seat_ids = {seat['seat_id'] for seat in available_seats}
+        invalid_seats = [seat_id for seat_id in seat_ids if seat_id not in available_seat_ids]
+        if invalid_seats:
+            messages.error(request, 'Beberapa kursi tidak lagi tersedia, silakan pilih ulang.')
+            return render_checkout()
+
+        total_amount = category['price'] * quantity
+
+        try:
+            with transaction.atomic():
+                order_id = od.create_order(profile['customer_id'], total_amount, 'Lunas')
+                created_tickets = []
+                for _ in range(quantity):
+                    created_tickets.append(tkt.create_ticket(order_id, category_id))
+
+                if seat_ids:
+                    if len(seat_ids) != len(created_tickets):
+                        raise Exception('Jumlah kursi harus sama dengan jumlah tiket.')
+                    for ticket_id, seat_id in zip(created_tickets, seat_ids):
+                        tkt.assign_seat_to_ticket(ticket_id, seat_id)
+
+                if promo_code:
+                    promotion = promo.get_promotion_by_code(promo_code)
+                    # If not found in Python, pass the code as the ID to force the SQL trigger
+                    # to throw its custom "ID tidak ditemukan" error.
+                    promo_id_to_apply = promotion['promotion_id'] if promotion else promo_code
+                    od.apply_promotion(order_id, promo_id_to_apply)
+
+            messages.success(request, 'Order berhasil dibuat. Silakan cek My Tickets.')
+            return redirect('core:my_tickets')
+        except Exception as e:
+            messages.error(request, _clean_db_error(e))
+
+    return render_checkout()
 
 
 def _tc_context(request, role: str) -> dict:
