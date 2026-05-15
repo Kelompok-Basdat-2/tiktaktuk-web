@@ -234,17 +234,47 @@ def dashboard_customer(request):
 
 def order(request):
     """Order list page."""
+    user = _session_user(request)
     role = (request.GET.get('role') or 'customer').strip().lower()
     if role not in {'admin', 'organizer', 'customer', 'guest'}:
         role = 'customer'
 
-    user = _session_user(request)
+    if request.method == 'POST':
+        post_role = (request.POST.get('role') or role).strip().lower()
+        if post_role == 'admin' and user and auth.get_primary_role(user['user_id']) == 'admin':
+            action = (request.POST.get('action') or '').strip()
+            order_id = (request.POST.get('order_id') or '').strip()
+            payment_status_key = (request.POST.get('payment_status') or '').strip().lower()
+
+            status_map = {
+                'paid': 'Lunas',
+                'pending': 'Pending',
+                'cancelled': 'Dibatalkan',
+            }
+
+            try:
+                with transaction.atomic():
+                    if action == 'update' and order_id and payment_status_key in status_map:
+                        od.update_order_status(order_id, status_map[payment_status_key])
+                        messages.success(request, f'Order {order_id} berhasil diperbarui.')
+                    elif action == 'delete' and order_id:
+                        od.delete_order(order_id)
+                        messages.success(request, f'Order {order_id} berhasil dihapus.')
+                    else:
+                        messages.error(request, 'Aksi order tidak valid.')
+            except Exception as e:
+                messages.error(request, _clean_db_error(e))
+
+            return redirect(f"{request.path}?role=admin")
+
+        return redirect('core:login')
+
     if role == 'admin':
         current_orders = od.get_all_orders()
-    elif role == 'organizer':
-        current_orders = od.get_orders_by_organizer(user['user_id']) if user else []
-    elif role == 'customer':
-        current_orders = od.get_orders_by_customer(user['user_id']) if user else []
+    elif role == 'organizer' and user:
+        current_orders = od.get_orders_by_organizer(user['user_id'])
+    elif role == 'customer' and user:
+        current_orders = od.get_orders_by_customer(user['user_id'])
     else:
         current_orders = []
 
@@ -299,27 +329,88 @@ def order(request):
 
 
 def promotion(request):
-    """Promotion list page - frontend only."""
+    """Promotion list page."""
+    user = _session_user(request)
     role = (request.GET.get('role') or 'guest').strip().lower()
     if role not in {'admin', 'organizer', 'customer', 'guest'}:
         role = 'guest'
 
+    if request.method == 'POST':
+        if not user or auth.get_primary_role(user['user_id']) != 'admin':
+            return redirect('core:login')
+
+        action = (request.POST.get('action') or '').strip()
+        promotion_id = (request.POST.get('promotion_id') or '').strip()
+        promo_code = (request.POST.get('promo_code') or '').strip()
+        discount_type = (request.POST.get('discount_type') or '').strip().lower()
+        discount_value_raw = (request.POST.get('discount_value') or '').strip()
+        start_date = (request.POST.get('start_date') or '').strip()
+        end_date = (request.POST.get('end_date') or '').strip()
+        usage_limit_raw = (request.POST.get('usage_limit') or '').strip()
+
+        if action not in {'create', 'update', 'delete'}:
+            messages.error(request, 'Aksi promo tidak valid.')
+            return redirect(f'{request.path}?role=admin')
+
+        try:
+            with transaction.atomic():
+                if action == 'delete':
+                    if not promotion_id:
+                        messages.error(request, 'Promo tidak ditemukan.')
+                    else:
+                        promo.delete_promotion(promotion_id)
+                        messages.success(request, 'Promo berhasil dihapus.')
+                else:
+                    if not all([promo_code, discount_type, discount_value_raw, start_date, end_date, usage_limit_raw]):
+                        raise ValueError('Semua field promo wajib diisi.')
+
+                    discount_value = float(discount_value_raw)
+                    usage_limit = int(usage_limit_raw)
+
+                    if discount_type not in {'percentage', 'nominal'}:
+                        raise ValueError('Tipe diskon tidak valid.')
+                    if discount_value < 0:
+                        raise ValueError('Nilai diskon tidak boleh negatif.')
+                    if usage_limit <= 0:
+                        raise ValueError('Batas penggunaan harus lebih dari 0.')
+
+                    if action == 'create':
+                        promo.create_promotion(promo_code, discount_type, discount_value, start_date, end_date, usage_limit)
+                        messages.success(request, 'Promo berhasil dibuat.')
+                    else:
+                        if not promotion_id:
+                            raise ValueError('Promo tidak ditemukan.')
+                        promo.update_promotion(promotion_id, promo_code, discount_type, discount_value, start_date, end_date, usage_limit)
+                        messages.success(request, 'Promo berhasil diperbarui.')
+        except Exception as e:
+            messages.error(request, _clean_db_error(e) if 'Error:' in str(e) else str(e))
+
+        return redirect(f'{request.path}?role=admin')
+
     raw_promotions = promo.get_promotions()
     promotions = []
+    total_usage = 0
     for promotion_item in raw_promotions:
-        discount_type = promotion_item['discount_type'].lower()
+        discount_type = (promotion_item['discount_type'] or '').lower()
+        total_usage += int(promotion_item.get('usage_count') or 0)
         promotions.append({
             'id': promotion_item['promotion_id'],
             'promo_code': promotion_item['promo_code'],
             'discount_type': discount_type,
             'discount_type_label': 'Persentase' if discount_type == 'percentage' else 'Nominal',
+            'discount_type_value': discount_type,
+            'discount_value': float(promotion_item['discount_value']),
             'discount_value_display': (
                 f'{promotion_item["discount_value"]:.0f}%'
                 if discount_type == 'percentage'
                 else f'Rp {promotion_item["discount_value"]:,.0f}'.replace(',', '.')
             ),
             'start_date': promotion_item['start_date'].isoformat(),
+            'start_date_value': promotion_item['start_date'].isoformat(),
             'end_date': promotion_item['end_date'].isoformat(),
+            'end_date_value': promotion_item['end_date'].isoformat(),
+            'usage_limit': promotion_item['usage_limit'],
+            'usage_count': promotion_item['usage_count'],
             'usage': f'{promotion_item["usage_count"]} / {promotion_item["usage_limit"]}',
             'status': 'active' if promotion_item['start_date'] <= date.today() <= promotion_item['end_date'] else 'expired',
             'status_label': 'Aktif' if promotion_item['start_date'] <= date.today() <= promotion_item['end_date'] else 'Tidak Aktif',
@@ -327,7 +418,7 @@ def promotion(request):
 
     stats = {
         'total_promo': len(promotions),
-        'total_usage': 144,
+        'total_usage': total_usage,
         'percentage_type': sum(1 for promotion in promotions if promotion['discount_type'] == 'percentage'),
     }
 

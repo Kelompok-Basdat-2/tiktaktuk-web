@@ -1,10 +1,12 @@
 -- ============================================================
--- TK04 Trigger #X — Promotion Validation for ORDER_PROMOTION
+-- TK04 Trigger #3 — Promotion Validation + Delete Protection
 -- ============================================================
 -- Fires BEFORE INSERT on ORDER_PROMOTION.
 --  1. Rejects missing promotion IDs with a clear error message.
 --  2. Rejects promotions whose usage has reached usage_limit.
 --  3. Rejects promotions that are not valid for the event date(s) linked to the target order.
+-- Fires BEFORE DELETE on PROMOTION.
+--  4. Rejects deleting promotions that are still referenced by ORDER_PROMOTION.
 -- ============================================================
 
 CREATE OR REPLACE FUNCTION validate_order_promotion()
@@ -61,3 +63,30 @@ CREATE TRIGGER trg_validate_order_promotion
 BEFORE INSERT ON ORDER_PROMOTION
 FOR EACH ROW
 EXECUTE FUNCTION validate_order_promotion();
+
+
+CREATE OR REPLACE FUNCTION prevent_used_promotion_delete()
+RETURNS TRIGGER AS $$
+DECLARE
+    ref_count INTEGER;
+BEGIN
+    SELECT COUNT(*)
+    INTO ref_count
+    FROM ORDER_PROMOTION
+    WHERE promotion_id = OLD.promotion_id;
+
+    IF ref_count > 0 THEN
+        RAISE EXCEPTION 'Error: Promotion "%" telah digunakan oleh % order dan tidak dapat dihapus.',
+            OLD.promo_code, ref_count;
+    END IF;
+
+    RETURN OLD;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_prevent_used_promotion_delete ON PROMOTION;
+
+CREATE TRIGGER trg_prevent_used_promotion_delete
+BEFORE DELETE ON PROMOTION
+FOR EACH ROW
+EXECUTE FUNCTION prevent_used_promotion_delete();

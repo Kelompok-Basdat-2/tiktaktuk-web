@@ -115,49 +115,63 @@
 <div class="modal hidden order-modal" id="update-order-modal">
     <div class="modal-overlay js-close-order-modal" data-modal-close></div>
     <div class="modal-card order-modal-card">
-        <div class="modal-header">
-            <div>
-                <h2 class="modal-title">Update Status Order</h2>
+        <form id="update-order-form" method="post" action="">
+            {% csrf_token %}
+            <input type="hidden" name="role" value="{{ role }}">
+            <input type="hidden" name="action" value="update">
+            <input type="hidden" name="order_id" id="update-order-form-id" value="">
+
+            <div class="modal-header">
+                <div>
+                    <h2 class="modal-title">Update Status Order</h2>
+                </div>
+                <button type="button" class="modal-close js-close-order-modal" aria-label="Tutup modal" data-modal-close>&times;</button>
             </div>
-            <button type="button" class="modal-close js-close-order-modal" aria-label="Tutup modal" data-modal-close>&times;</button>
-        </div>
 
-        <div class="order-modal-order-id" id="update-order-id">ord_001</div>
+            <div class="order-modal-order-id" id="update-order-id">ord_001</div>
 
-        <div class="form-group">
-            <label class="form-label required">Payment Status</label>
-            <select class="form-input" id="update-order-status">
-                <option value="paid">Lunas</option>
-                <option value="pending">Pending</option>
-                <option value="cancelled">Dibatalkan</option>
-            </select>
-        </div>
+            <div class="form-group">
+                <label class="form-label required">Payment Status</label>
+                <select class="form-input" id="update-order-status" name="payment_status">
+                    <option value="paid">Lunas</option>
+                    <option value="pending">Pending</option>
+                    <option value="cancelled">Dibatalkan</option>
+                </select>
+            </div>
 
-        <div class="modal-actions order-modal-actions">
-            <button type="button" class="btn btn-modal-cancel js-close-order-modal" data-modal-close>Batal</button>
-            <button type="button" class="btn btn-modal-primary">Update</button>
-        </div>
+            <div class="modal-actions order-modal-actions">
+                <button type="button" class="btn btn-modal-cancel js-close-order-modal" data-modal-close>Batal</button>
+                <button type="submit" class="btn btn-modal-primary">Update</button>
+            </div>
+        </form>
     </div>
 </div>
 
 <div class="modal hidden order-modal" id="delete-order-modal">
     <div class="modal-overlay js-close-order-modal" data-modal-close></div>
     <div class="modal-card order-modal-card delete-order-modal-card">
-        <div class="modal-header">
-            <div>
-                <h2 class="modal-title delete-title">Hapus Order</h2>
+        <form id="delete-order-form" method="post" action="">
+            {% csrf_token %}
+            <input type="hidden" name="role" value="{{ role }}">
+            <input type="hidden" name="action" value="delete">
+            <input type="hidden" name="order_id" id="delete-order-id" value="">
+
+            <div class="modal-header">
+                <div>
+                    <h2 class="modal-title delete-title">Hapus Order</h2>
+                </div>
+                <button type="button" class="modal-close js-close-order-modal" aria-label="Tutup modal" data-modal-close>&times;</button>
             </div>
-            <button type="button" class="modal-close js-close-order-modal" aria-label="Tutup modal" data-modal-close>&times;</button>
-        </div>
 
-        <p class="delete-message">
-            Apakah Anda yakin ingin menghapus catatan order ini? Tindakan ini tidak dapat dibatalkan.
-        </p>
+            <p class="delete-message">
+                Apakah Anda yakin ingin menghapus catatan order ini? Tindakan ini tidak dapat dibatalkan.
+            </p>
 
-        <div class="modal-actions delete-modal-actions">
-            <button type="button" class="btn btn-modal-cancel js-close-order-modal" data-modal-close>Batal</button>
-            <button type="button" class="btn btn-modal-danger">Hapus</button>
-        </div>
+            <div class="modal-actions delete-modal-actions">
+                <button type="button" class="btn btn-modal-cancel js-close-order-modal" data-modal-close>Batal</button>
+                <button type="submit" class="btn btn-modal-danger">Hapus</button>
+            </div>
+        </form>
     </div>
 </div>
 {% endif %}
@@ -499,7 +513,9 @@
     const updateOrderModal = document.getElementById('update-order-modal');
     const deleteOrderModal = document.getElementById('delete-order-modal');
     const updateOrderId = document.getElementById('update-order-id');
+    const updateOrderFormId = document.getElementById('update-order-form-id');
     const updateOrderStatus = document.getElementById('update-order-status');
+    const deleteOrderFormId = document.getElementById('delete-order-id');
     const openUpdateButtons = document.querySelectorAll('.js-open-update-modal');
     const openDeleteButtons = document.querySelectorAll('.js-open-delete-modal');
     const closeButtons = document.querySelectorAll('[data-modal-close]');
@@ -542,6 +558,9 @@
             if (updateOrderId) {
                 updateOrderId.textContent = button.dataset.orderId || 'ord_001';
             }
+            if (updateOrderFormId) {
+                updateOrderFormId.value = button.dataset.orderId || '';
+            }
             if (updateOrderStatus) {
                 updateOrderStatus.value = button.dataset.orderStatus || 'paid';
             }
@@ -553,6 +572,9 @@
         button.addEventListener('click', () => {
             if (updateOrderId) {
                 updateOrderId.textContent = button.dataset.orderId || 'ord_001';
+            }
+            if (deleteOrderFormId) {
+                deleteOrderFormId.value = button.dataset.orderId || '';
             }
             openModal(deleteOrderModal);
         });

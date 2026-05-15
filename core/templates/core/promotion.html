@@ -65,7 +65,7 @@
                         </thead>
                         <tbody id="promo-table-body">
                             {% for promotion in promotions %}
-                                <tr data-code="{{ promotion.promo_code|lower }}" data-type="{{ promotion.discount_type }}">
+                                <tr data-id="{{ promotion.id }}" data-code="{{ promotion.promo_code|lower }}" data-type="{{ promotion.discount_type }}" data-discount-type="{{ promotion.discount_type_value }}" data-discount-value="{{ promotion.discount_value }}" data-start-date="{{ promotion.start_date_value }}" data-end-date="{{ promotion.end_date_value }}" data-usage-limit="{{ promotion.usage_limit }}">
                                     <td>
                                         <div class="promo-code-row">
                                             <span class="promo-badge">%</span>
@@ -83,8 +83,8 @@
                                     {% if is_admin %}
                                         <td>
                                             <div class="row-actions">
-                                                <button type="button" class="btn btn-icon js-edit-promo" data-code="{{ promotion.promo_code }}">✎</button>
-                                                <button type="button" class="btn btn-icon danger js-delete-promo" data-code="{{ promotion.promo_code }}">🗑</button>
+                                                <button type="button" class="btn btn-icon js-edit-promo" data-id="{{ promotion.id }}" data-code="{{ promotion.promo_code }}">✎</button>
+                                                <button type="button" class="btn btn-icon danger js-delete-promo" data-id="{{ promotion.id }}" data-code="{{ promotion.promo_code }}">🗑</button>
                                             </div>
                                         </td>
                                     {% endif %}
@@ -109,39 +109,43 @@
             <button type="button" class="modal-close" data-close-modal="promo">&times;</button>
         </div>
 
-        <form id="promo-form">
+        <form id="promo-form" method="post" action="">
+            {% csrf_token %}
+            <input type="hidden" name="role" value="{{ role }}">
+            <input type="hidden" name="action" id="promo-action" value="create">
+            <input type="hidden" name="promotion_id" id="promo-id" value="">
             <div class="form-group">
                 <label class="form-label required">Kode Promo</label>
-                <input class="form-input" type="text" placeholder="CTH. TIKTAK20">
+                <input class="form-input" type="text" id="promo-code-input" name="promo_code" placeholder="CTH. TIKTAK20">
             </div>
             <div class="form-group">
                 <label class="form-label required">Tipe Diskon</label>
-                <select class="form-input">
-                    <option>Persentase (%)</option>
-                    <option>Nominal</option>
+                <select class="form-input" id="promo-discount-type" name="discount_type">
+                    <option value="percentage">Persentase (%)</option>
+                    <option value="nominal">Nominal</option>
                 </select>
             </div>
             <div class="form-group">
                 <label class="form-label required">Nilai Diskon</label>
-                <input class="form-input" type="text" placeholder="cth. 20">
+                <input class="form-input" type="number" step="0.01" min="0" id="promo-discount-value" name="discount_value" placeholder="cth. 20">
             </div>
             <div class="form-grid-2">
                 <div class="form-group">
                     <label class="form-label required">Tanggal Mulai</label>
-                    <input class="form-input" type="date">
+                    <input class="form-input" type="date" id="promo-start-date" name="start_date">
                 </div>
                 <div class="form-group">
                     <label class="form-label required">Tanggal Berakhir</label>
-                    <input class="form-input" type="date">
+                    <input class="form-input" type="date" id="promo-end-date" name="end_date">
                 </div>
             </div>
             <div class="form-group">
                 <label class="form-label required">Batas Penggunaan</label>
-                <input class="form-input" type="number" placeholder="100">
+                <input class="form-input" type="number" min="1" id="promo-usage-limit" name="usage_limit" placeholder="100">
             </div>
             <div class="modal-actions">
                 <button type="button" class="btn btn-modal-cancel" data-close-modal="promo">Batal</button>
-                <button type="submit" class="btn btn-primary btn-modal-primary">Buat</button>
+                <button type="submit" class="btn btn-primary btn-modal-primary" id="promo-submit-button">Buat</button>
             </div>
         </form>
     </div>
@@ -156,11 +160,17 @@
             </div>
             <button type="button" class="modal-close" data-close-modal="delete">&times;</button>
         </div>
-        <p class="delete-message">Apakah Anda yakin ingin menghapus promo ini?</p>
-        <div class="modal-actions delete-modal-actions">
-            <button type="button" class="btn btn-modal-cancel" data-close-modal="delete">Batal</button>
-            <button type="button" class="btn btn-modal-danger">Hapus</button>
-        </div>
+        <form id="delete-promo-form" method="post" action="">
+            {% csrf_token %}
+            <input type="hidden" name="role" value="{{ role }}">
+            <input type="hidden" name="action" value="delete">
+            <input type="hidden" name="promotion_id" id="delete-promo-id" value="">
+            <p class="delete-message">Apakah Anda yakin ingin menghapus promo ini?</p>
+            <div class="modal-actions delete-modal-actions">
+                <button type="button" class="btn btn-modal-cancel" data-close-modal="delete">Batal</button>
+                <button type="submit" class="btn btn-modal-danger">Hapus</button>
+            </div>
+        </form>
     </div>
 </div>
 {% endif %}
@@ -473,8 +483,18 @@
     const promoModal = document.getElementById('promo-modal');
     const deleteModal = document.getElementById('delete-modal');
     const promoForm = document.getElementById('promo-form');
+    const deletePromoForm = document.getElementById('delete-promo-form');
     const promoModalTitle = document.getElementById('promo-modal-title');
-    const promoSubmitButton = promoForm?.querySelector('button[type="submit"]');
+    const promoSubmitButton = document.getElementById('promo-submit-button');
+    const promoActionInput = document.getElementById('promo-action');
+    const promoIdInput = document.getElementById('promo-id');
+    const promoCodeInput = document.getElementById('promo-code-input');
+    const promoDiscountTypeInput = document.getElementById('promo-discount-type');
+    const promoDiscountValueInput = document.getElementById('promo-discount-value');
+    const promoStartDateInput = document.getElementById('promo-start-date');
+    const promoEndDateInput = document.getElementById('promo-end-date');
+    const promoUsageLimitInput = document.getElementById('promo-usage-limit');
+    const deletePromoIdInput = document.getElementById('delete-promo-id');
 
     function openModal(modal) {
         if (modal) {
@@ -495,16 +515,28 @@
         if (promoSubmitButton) {
             promoSubmitButton.textContent = 'Buat';
         }
+        if (promoActionInput) promoActionInput.value = 'create';
+        if (promoIdInput) promoIdInput.value = '';
+        if (promoForm) promoForm.reset();
+        if (promoActionInput) promoActionInput.value = 'create';
         openModal(promoModal);
     }
 
-    function openEditPromoModal() {
+    function openEditPromoModal(button) {
         if (promoModalTitle) {
             promoModalTitle.textContent = 'Edit Promo';
         }
         if (promoSubmitButton) {
             promoSubmitButton.textContent = 'Simpan';
         }
+        if (promoActionInput) promoActionInput.value = 'update';
+        if (promoIdInput) promoIdInput.value = button?.dataset.id || '';
+        if (promoCodeInput) promoCodeInput.value = button?.dataset.code || button?.closest('tr')?.dataset.code || '';
+        if (promoDiscountTypeInput) promoDiscountTypeInput.value = button?.closest('tr')?.dataset.discountType || 'percentage';
+        if (promoDiscountValueInput) promoDiscountValueInput.value = button?.closest('tr')?.dataset.discountValue || '';
+        if (promoStartDateInput) promoStartDateInput.value = button?.closest('tr')?.dataset.startDate || '';
+        if (promoEndDateInput) promoEndDateInput.value = button?.closest('tr')?.dataset.endDate || '';
+        if (promoUsageLimitInput) promoUsageLimitInput.value = button?.closest('tr')?.dataset.usageLimit || '';
         openModal(promoModal);
     }
 
@@ -532,20 +564,18 @@
     document.getElementById('open-create-modal')?.addEventListener('click', openCreatePromoModal);
 
     document.querySelectorAll('.js-edit-promo').forEach((button) => {
-        button.addEventListener('click', openEditPromoModal);
+        button.addEventListener('click', () => openEditPromoModal(button));
     });
 
     document.querySelectorAll('.js-delete-promo').forEach((button) => {
-        button.addEventListener('click', () => openModal(deleteModal));
+        button.addEventListener('click', () => {
+            if (deletePromoIdInput) deletePromoIdInput.value = button.dataset.id || '';
+            openModal(deleteModal);
+        });
     });
 
     searchInput?.addEventListener('input', applyFilters);
     filterSelect?.addEventListener('change', applyFilters);
-
-    promoForm?.addEventListener('submit', (event) => {
-        event.preventDefault();
-        closeModal(promoModal);
-    });
 
     applyFilters();
 </script>

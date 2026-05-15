@@ -87,3 +87,19 @@ def apply_promotion(order_id: str, promotion_id: str) -> str:
             [order_promotion_id, promotion_id, order_id],
         )
     return order_promotion_id
+
+
+def update_order_status(order_id: str, payment_status: str) -> None:
+    with connection.cursor() as c:
+        c.execute(
+            'UPDATE "ORDER" SET payment_status = %s WHERE order_id = %s',
+            [payment_status, order_id],
+        )
+
+
+def delete_order(order_id: str) -> None:
+    with connection.cursor() as c:
+        c.execute('DELETE FROM HAS_RELATIONSHIP WHERE ticket_id IN (SELECT ticket_id FROM TICKET WHERE torder_id = %s)', [order_id])
+        c.execute('DELETE FROM ORDER_PROMOTION WHERE order_id = %s', [order_id])
+        c.execute('DELETE FROM TICKET WHERE torder_id = %s', [order_id])
+        c.execute('DELETE FROM "ORDER" WHERE order_id = %s', [order_id])
