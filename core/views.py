@@ -306,6 +306,8 @@ def order(request):
         'core/order.html',
         {
             'role': role,
+            'user_name': user['username'] if user else '',
+            'user_role': {'admin': 'Administrator', 'organizer': 'Organizer', 'customer': 'Customer', 'guest': 'Guest'}.get(role, 'User'),
             'is_admin': role == 'admin',
             'is_organizer': role == 'organizer',
             'is_customer': role == 'customer',
@@ -427,6 +429,8 @@ def promotion(request):
         'core/promotion.html',
         {
             'role': role,
+            'user_name': user['username'] if user else '',
+            'user_role': {'admin': 'Administrator', 'organizer': 'Organizer', 'customer': 'Customer', 'guest': 'Guest'}.get(role, 'User'),
             'is_admin': role == 'admin',
             'page_title': 'Manajemen Promosi',
             'page_subtitle': 'Kelola kode promo dan kampanye diskon',
@@ -1127,6 +1131,8 @@ def checkout(request):
             'promotions': promotions,
             'event_date': event_dt.date().isoformat() if event_dt else '',
             'form_data': form_data,
+            'user_name': user['username'],
+            'user_role': 'Customer',
         })
 
     if request.method == 'POST':

@@ -417,7 +417,7 @@
 
 {% block body %}
 <div class="layout checkout-layout">
-    {% include 'core/_sidebar.html' with role='customer' active='tickets' user_name='TikTakTuk User' user_role='Customer' %}
+    {% include 'core/_sidebar.html' with role='customer' active='tickets' user_name=user_name user_role=user_role %}
     <main class="main-content">
         <form id="checkout-form" method="post" class="checkout-wrapper">
             {% csrf_token %}

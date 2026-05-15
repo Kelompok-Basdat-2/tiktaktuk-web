@@ -2,7 +2,7 @@
 
 {% block body %}
 <div class="layout order-layout{% if role == 'customer' %} customer-role{% endif %}">
-    {% include 'core/_sidebar.html' with role=role active='orders' user_name='TikTakTuk User' user_role=role|title %}
+    {% include 'core/_sidebar.html' with role=role active='orders' user_name=user_name user_role=user_role %}
     <main class="main-content">
         <header class="header order-header">
             <div class="header-left">
