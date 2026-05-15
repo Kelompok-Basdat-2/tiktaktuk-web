@@ -1,3 +1,4 @@
+import json
 from datetime import date, timedelta
 
 from django.shortcuts import render, redirect
@@ -1492,9 +1493,31 @@ def tickets_admin(request):
 
     search = (request.GET.get('search') or '').strip()
     event_id = (request.GET.get('event_id') or '').strip()
+    payment_status = (request.GET.get('payment_status') or '').strip()
 
-    ticket_list = tkt.get_all_tickets(search=search, event_id=event_id)
+    ticket_list = tkt.get_all_tickets(search=search, event_id=event_id, payment_status=payment_status)
     events = tkt.get_events_for_dropdown()
+    orders = tkt.get_orders_for_dropdown()
+    venues = tkt.get_venues_for_dropdown()
+
+    categories_by_event = {}
+    seats_by_venue = {}
+    event_to_venue = {}
+    for event in events:
+        cats = tkt.get_categories_for_event(event['event_id'])
+        for cat in cats:
+            cat['price'] = float(cat['price']) if cat.get('price') is not None else 0
+        categories_by_event[str(event['event_id'])] = cats
+        event_to_venue[str(event['event_id'])] = str(event['venue_id']) if event.get('venue_id') else ''
+    for venue in venues:
+        seats_by_venue[str(venue['venue_id'])] = tkt.get_seats_for_venue(venue['venue_id'])
+
+    create_events = [e for e in events if categories_by_event.get(str(e['event_id']))]
+
+    for ticket in ticket_list:
+        ticket['event_id'] = ticket.get('event_id', '')
+        venue_id = event_to_venue.get(str(ticket['event_id']), '')
+        ticket['venue_id'] = venue_id
 
     ctx = _ticket_context(request, 'admin', 'tickets')
     ctx.update({
@@ -1502,9 +1525,15 @@ def tickets_admin(request):
         'page_subtitle': 'Kelola semua tiket dalam sistem',
         'tickets': ticket_list,
         'events': events,
+        'create_events': create_events,
+        'orders': orders,
+        'categories_by_event': json.dumps(categories_by_event),
+        'seats_by_venue': json.dumps(seats_by_venue),
+        'event_to_venue': json.dumps(event_to_venue),
         'total_tickets': len(ticket_list),
         'search': search,
         'selected_event': event_id,
+        'selected_payment_status': payment_status,
     })
     return render(request, 'core/tickets_admin.html', ctx)
 
@@ -1516,15 +1545,45 @@ def tickets_organizer(request):
 
     user = _session_user(request)
     search = (request.GET.get('search') or '').strip()
-    ticket_list = tkt.get_tickets_by_organizer(user['user_id'], search=search)
+    payment_status = (request.GET.get('payment_status') or '').strip()
+    ticket_list = tkt.get_tickets_by_organizer(user['user_id'], search=search, payment_status=payment_status)
+    events = tkt.get_events_for_dropdown()
+    orders = tkt.get_orders_for_dropdown()
+    venues = tkt.get_venues_for_dropdown()
+
+    categories_by_event = {}
+    seats_by_venue = {}
+    event_to_venue = {}
+    for event in events:
+        cats = tkt.get_categories_for_event(event['event_id'])
+        for cat in cats:
+            cat['price'] = float(cat['price']) if cat.get('price') is not None else 0
+        categories_by_event[str(event['event_id'])] = cats
+        event_to_venue[str(event['event_id'])] = str(event['venue_id']) if event.get('venue_id') else ''
+    for venue in venues:
+        seats_by_venue[str(venue['venue_id'])] = tkt.get_seats_for_venue(venue['venue_id'])
+
+    create_events = [e for e in events if categories_by_event.get(str(e['event_id']))]
+
+    for ticket in ticket_list:
+        ticket['event_id'] = ticket.get('event_id', '')
+        venue_id = event_to_venue.get(str(ticket['event_id']), '')
+        ticket['venue_id'] = venue_id
 
     ctx = _ticket_context(request, role, 'tickets')
     ctx.update({
         'page_title': 'Manajemen Tiket',
         'page_subtitle': 'Kelola tiket untuk event Anda',
         'tickets': ticket_list,
+        'events': events,
+        'create_events': create_events,
+        'orders': orders,
+        'categories_by_event': json.dumps(categories_by_event),
+        'seats_by_venue': json.dumps(seats_by_venue),
+        'event_to_venue': json.dumps(event_to_venue),
         'total_tickets': len(ticket_list),
         'search': search,
+        'selected_payment_status': payment_status,
     })
     return render(request, 'core/tickets_organizer.html', ctx)
 

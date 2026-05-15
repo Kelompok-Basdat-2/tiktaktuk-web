@@ -9,7 +9,7 @@ from django.db import connection
 # Ticket queries
 # ═══════════════════════════════════════════════════════════════════════════════
 
-def get_all_tickets(search: str = '', event_id: str = '') -> list[dict]:
+def get_all_tickets(search: str = '', event_id: str = '', payment_status: str = '') -> list[dict]:
     """All tickets with joins. Admin view."""
     sql = '''
         SELECT t.ticket_id, t.ticket_code, t.tcategory_id, t.torder_id,
@@ -34,6 +34,9 @@ def get_all_tickets(search: str = '', event_id: str = '') -> list[dict]:
     if event_id:
         conditions.append('e.event_id = %s')
         params.append(event_id)
+    if payment_status:
+        conditions.append('o.payment_status = %s')
+        params.append(payment_status)
 
     if conditions:
         sql += ' WHERE ' + ' AND '.join(conditions)
@@ -45,7 +48,7 @@ def get_all_tickets(search: str = '', event_id: str = '') -> list[dict]:
         return [dict(zip(columns, row)) for row in c.fetchall()]
 
 
-def get_tickets_by_organizer(user_id: str, search: str = '') -> list[dict]:
+def get_tickets_by_organizer(user_id: str, search: str = '', payment_status: str = '') -> list[dict]:
     """Tickets for events owned by this organizer."""
     sql = '''
         SELECT t.ticket_id, t.ticket_code, t.tcategory_id, t.torder_id,
@@ -68,6 +71,9 @@ def get_tickets_by_organizer(user_id: str, search: str = '') -> list[dict]:
     if search:
         sql += ' AND LOWER(t.ticket_code) LIKE %s'
         params.append(f'%{search.lower()}%')
+    if payment_status:
+        sql += ' AND o.payment_status = %s'
+        params.append(payment_status)
     sql += ' ORDER BY t.ticket_code'
 
     with connection.cursor() as c:
@@ -133,9 +139,13 @@ def get_ticket_by_id(ticket_id: str) -> dict | None:
 
 def _next_ticket_code() -> str:
     with connection.cursor() as c:
-        c.execute('SELECT COUNT(*) FROM TICKET')
+        c.execute('''
+            SELECT COALESCE(MAX(CAST(SUBSTRING(ticket_code FROM 5) AS INTEGER)), 0) + 1
+            FROM TICKET
+            WHERE ticket_code ~ '^TKT-[0-9]+$'
+        ''')
         count = c.fetchone()[0]
-    return f'TKT-{count + 1:04d}'
+    return f'TKT-{count:04d}'
 
 
 def create_ticket(torder_id: str, tcategory_id: str) -> str:
@@ -154,8 +164,11 @@ def create_ticket(torder_id: str, tcategory_id: str) -> str:
 
 def _next_ticket_suffix() -> str:
     with connection.cursor() as c:
-        c.execute('SELECT COUNT(*) FROM TICKET')
-        count = c.fetchone()[0] + 1
+        c.execute('''
+            SELECT COALESCE(MAX(CAST(SUBSTRING(ticket_id FROM 5) AS INTEGER)), 0) + 1
+            FROM TICKET
+        ''')
+        count = c.fetchone()[0]
     return f'{count:03d}'
 
 
@@ -324,8 +337,11 @@ def create_seat(section: str, seat_number: str, row_number: str, venue_id: str) 
 
 def _next_seat_id() -> str:
     with connection.cursor() as c:
-        c.execute('SELECT COUNT(*) FROM SEAT')
-        count = c.fetchone()[0] + 1
+        c.execute('''
+            SELECT COALESCE(MAX(CAST(SUBSTRING(seat_id FROM 6) AS INTEGER)), 0) + 1
+            FROM SEAT
+        ''')
+        count = c.fetchone()[0]
     return f'seat-{count:03d}'
 
 
@@ -356,7 +372,7 @@ def get_venues_for_dropdown() -> list[dict]:
 def get_events_for_dropdown() -> list[dict]:
     with connection.cursor() as c:
         c.execute(
-            'SELECT event_id, event_title, event_datetime FROM EVENT ORDER BY event_datetime DESC'
+            'SELECT event_id, event_title, event_datetime, venue_id FROM EVENT ORDER BY event_datetime DESC'
         )
         columns = [col[0] for col in c.description]
         return [dict(zip(columns, row)) for row in c.fetchall()]
